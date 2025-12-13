@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Registration - TourApp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-registration.js"></script>
+    <script src="js/real-time-sync.js"></script>
+    
+    <style>
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                height: 100vh;
+                z-index: 50;
+            }
+            .flex-1 {
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.-translate-x-full + .flex-1 {
+                transform: translateX(0);
+            }
+            .sidebar:not(.-translate-x-full) + .flex-1 {
+                transform: translateX(16rem);
+            }
+        }
+        .active-nav-item {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+            <div class="p-4 border-b">
+                <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                    <i data-feather="compass" class="mr-2"></i>
+                    TourApp Admin
+                </h1>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+                    <a href="index.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="home" class="w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="trips-enhanced.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="map" class="w-5 h-5"></i>
+                        <span class="ml-3">Trips</span>
+                    </a>
+                    <a href="user-management-enhanced.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-check" class="w-5 h-5"></i>
+                        <span class="ml-3">User Management</span>
+                    </a>
+                </div>
+                <div class="p-4 border-t">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                    <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="ml-3">Register Users</span>
+                    </a>
+                    <a href="data-backup-enhanced.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="database" class="w-5 h-5"></i>
+                        <span class="ml-3">Data Backup</span>
+                    </a>
+                    <a href="admin-registration.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                        <i data-feather="shield" class="w-5 h-5"></i>
+                        <span class="ml-3">Admin Registration</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="settings" class="w-5 h-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full" src="https://static.photos/people/200x200/1" alt="Admin">
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-900 admin-name">Admin User</p>
+                        <p class="text-xs text-gray-500 admin-email">admin@cca.edu.ph</p>
+                    </div>
+                    <button class="ml-auto text-gray-500 hover:text-gray-700" onclick="window.authManager.signOut()">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                            <i data-feather="menu" class="w-6 h-6"></i>
+                        </button>
+                        <h2 class="ml-2 text-lg font-medium text-gray-900">Admin Registration</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div id="connectionStatus" class="flex items-center text-sm text-green-600">
+                            <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
+                            Connected
+                        </div>
+                        <div id="syncIndicator" class="hidden"></div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Admin Registration Content -->
+            <main class="p-6">
+                <!-- Admin Registration Controls -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Admin Users</h3>
+                        <button id="registerAdminBtn" class="bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 flex items-center">
+                            <i data-feather="user-plus" class="w-4 h-4 mr-2"></i>
+                            Register New Admin
+                        </button>
+                    </div>
+                    
+                    <div class="text-sm text-gray-600 mb-4">
+                        <p>Manage admin users with different permission levels. Only super admins can register new admin users.</p>
+                    </div>
+                </div>
+
+                <!-- Admin Users Table -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i data-feather="loader" class="w-6 h-6 mx-auto mb-2 animate-spin text-gray-300"></i>
+                                        <p>Loading admin users...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Permission Levels -->
+                <div class="mt-6 bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Admin Permission Levels</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border border-red-200 rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 bg-red-100 rounded-full mr-3">
+                                    <i data-feather="shield" class="w-5 h-5 text-red-600"></i>
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900">Super Admin</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Full system access</li>
+                                <li>• User management</li>
+                                <li>• Trip management</li>
+                                <li>• System settings</li>
+                                <li>• Data backup/restore</li>
+                                <li>• Admin management</li>
+                                <li>• Analytics access</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 bg-green-100 rounded-full mr-3">
+                                    <i data-feather="user-check" class="w-5 h-5 text-green-600"></i>
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900">Admin</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• User management</li>
+                                <li>• Trip management</li>
+                                <li>• Data backup/restore</li>
+                                <li>• Analytics access</li>
+                                <li>• No system settings</li>
+                                <li>• No admin management</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 bg-yellow-100 rounded-full mr-3">
+                                    <i data-feather="eye" class="w-5 h-5 text-yellow-600"></i>
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900">Moderator</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• User management</li>
+                                <li>• Trip management</li>
+                                <li>• Limited access</li>
+                                <li>• No data backup</li>
+                                <li>• No system settings</li>
+                                <li>• No admin management</li>
+                                <li>• No analytics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+        
+        // Verify SweetAlert2 is loaded
+        if (typeof Swal !== 'undefined') {
+            console.log('SweetAlert2 is loaded and ready');
+        } else {
+            console.error('SweetAlert2 not loaded');
+        }
+        
+        // Toggle sidebar on mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (!sidebar.contains(event.target) && 
+                event.target !== toggleBtn && 
+                !toggleBtn.contains(event.target) &&
+                window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+
+        // Prevent sidebar toggle from closing when clicking inside sidebar
+        document.querySelector('.sidebar').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    </script>
+</body>
+</html>

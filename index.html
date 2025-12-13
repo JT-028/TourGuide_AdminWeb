@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourApp Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/user-management.js"></script>
+    <script src="js/user-management-advanced.js"></script>
+    <script src="js/data-backup-enhanced.js"></script>
+    <script src="js/admin-registration.js"></script>
+    <script src="js/real-time-sync.js"></script>
+    <script src="js/admin-android-sync.js"></script>
+    <style>
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                height: 100vh;
+                z-index: 50;
+            }
+            .flex-1 {
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.-translate-x-full + .flex-1 {
+                transform: translateX(0);
+            }
+            .sidebar:not(.-translate-x-full) + .flex-1 {
+                transform: translateX(16rem);
+            }
+        }
+
+.dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .active-nav-item {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+            <div class="p-4 border-b">
+                <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                    <i data-feather="compass" class="mr-2"></i>
+                    TourApp Admin
+                </h1>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+<a href="index.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                    <i data-feather="home" class="w-5 h-5"></i>
+                    <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="user-management.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-check" class="w-5 h-5"></i>
+                        <span class="ml-3">User Management</span>
+                    </a>
+            </div>
+                <div class="p-4 border-t">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                    <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="ml-3">Register Users</span>
+                    </a>
+                    <a href="data-backup.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="database" class="w-5 h-5"></i>
+                        <span class="ml-3">Data Backup</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="settings" class="w-5 h-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full object-cover" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K" alt="Admin" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K'">
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900 admin-name">Admin User</p>
+                        <p class="text-xs text-gray-500 admin-email">admin@cca.edu.ph</p>
+                    </div>
+                    <button onclick="window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                            <i data-feather="menu" class="w-6 h-6"></i>
+                        </button>
+<h2 class="ml-2 text-lg font-medium text-gray-900">Dashboard</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div id="connectionStatus" class="flex items-center text-sm text-green-600">
+                            <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
+                            Connected
+                        </div>
+                        <div id="syncIndicator" class="hidden"></div>
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                        </button>
+                        <div class="relative">
+                            <input type="text" placeholder="Search..." class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <main class="p-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-sky-100 text-sky-600">
+                                <i data-feather="users" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Total Users</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="total-users">
+                                    <span id="total-users-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="total-users-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-feather="user-plus" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Teachers</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="teacher-count">
+                                    <span id="teacher-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="teacher-count-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i data-feather="user" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Students</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="student-count">
+                                    <span id="student-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="student-count-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i data-feather="map" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Active Trips</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="active-trips">
+                                    <span id="active-trips-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="active-trips-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity and Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Activity -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
+                            <button class="text-sm text-sky-600 hover:text-sky-700">View All</button>
+                        </div>
+                        <div class="space-y-4 recent-activity-container">
+                            <!-- Recent activity will be populated by JavaScript -->
+                            <div class="text-center py-8 text-gray-500">
+                                <i data-feather="loader" class="w-8 h-8 mx-auto mb-3 animate-spin text-gray-300"></i>
+                                <p>Loading recent activity...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button class="w-full flex items-center justify-between p-3 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition quick-action-btn" data-action="register-teacher">
+                                <span>Register New Teacher</span>
+                                <i data-feather="user-plus" class="w-5 h-5"></i>
+                            </button>
+                            <button class="w-full flex items-center justify-between p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition quick-action-btn" data-action="create-backup">
+                                <span>Create Backup</span>
+                                <i data-feather="save" class="w-5 h-5"></i>
+                            </button>
+                            <button class="w-full flex items-center justify-between p-3 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition quick-action-btn" data-action="system-settings">
+                                <span>System Settings</span>
+                                <i data-feather="settings" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Android App Status Widget -->
+                <div id="android-app-status-container" class="mt-6 dashboard-container">
+                    <!-- This div will be populated with the android-app-status.html widget -->
+                </div>
+
+                <!-- Recent Users Table -->
+                <div class="mt-6 bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Recently Registered Users</h3>
+                        <button class="text-sm text-sky-600 hover:text-sky-700">View All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="recent-users-table">
+                                <!-- Recent users will be populated by JavaScript -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        <i data-feather="loader" class="w-6 h-6 mx-auto mb-2 animate-spin text-gray-300"></i>
+                                        <p>Loading recent users...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+        <script>
+        feather.replace();
+        
+        // Initialize dashboard after authentication guard passes
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard page loaded, waiting for auth guard...');
+            
+            // Initialize Feather icons
+            feather.replace();
+            
+            // Refresh Feather icons periodically for dynamic content
+            setInterval(() => {
+                feather.replace();
+            }, 1000);
+            
+            // Wait for auth guard to complete, then initialize dashboard
+            waitForAuthGuardAndInitialize();
+        });
+
+        // Wait for auth guard and initialize dashboard
+        async function waitForAuthGuardAndInitialize() {
+            let attempts = 0;
+            const maxAttempts = 20;
+            
+            while (attempts < maxAttempts) {
+                if (window.authGuard && window.authGuard.isInitialized) {
+                    console.log('Auth guard passed, initializing dashboard...');
+                    initializeDashboard();
+                    return;
+                }
+                
+                console.log(`Waiting for auth guard... attempt ${attempts + 1}`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                attempts++;
+            }
+            
+            console.error('Auth guard did not initialize in time');
+            // Don't redirect here, let the auth guard handle it
+        }
+
+        // Initialize dashboard with immediate data loading
+        function initializeDashboard() {
+            console.log('DashboardManager available:', typeof DashboardManager !== 'undefined');
+            console.log('firebaseServices available:', typeof firebaseServices !== 'undefined');
+            console.log('Firebase available:', typeof firebase !== 'undefined');
+            
+            // Verify SweetAlert2 is loaded
+            if (typeof Swal !== 'undefined') {
+                console.log('SweetAlert2 is loaded and ready');
+            } else {
+                console.error('SweetAlert2 not loaded');
+            }
+            
+            // Test Firebase connection first
+            testFirebaseConnection();
+            
+            // Try to load data immediately
+            loadDashboardDataImmediately();
+            
+            // Also try the DashboardManager if available
+            if (typeof DashboardManager !== 'undefined') {
+                console.log('Using DashboardManager class');
+                window.dashboardManager = new DashboardManager();
+            }
+        }
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                console.log('Testing Firebase connection...');
+                
+                if (typeof firebase === 'undefined') {
+                    console.error('Firebase SDK not loaded');
+                    showDashboardError('Firebase SDK not loaded. Please check your internet connection.');
+                    return false;
+                }
+                
+                if (typeof firebaseServices === 'undefined') {
+                    console.error('Firebase services not initialized');
+                    showDashboardError('Firebase services not initialized. Please refresh the page.');
+                    return false;
+                }
+                
+                // Test basic Firebase connection
+                console.log('Firebase app:', firebase.app().name);
+                console.log('Firebase auth:', firebaseServices.auth);
+                console.log('Firebase firestore:', firebaseServices.db);
+                
+                console.log('Firebase connection test successful');
+                return true;
+                
+            } catch (error) {
+                console.error('Firebase connection test failed:', error);
+                showDashboardError(`Firebase connection failed: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Load dashboard data immediately without waiting
+        async function loadDashboardDataImmediately() {
+            try {
+                console.log('Loading dashboard data immediately...');
+                
+                // Wait for Firebase services and authentication
+                let attempts = 0;
+                const maxAttempts = 15;
+                
+                while (attempts < maxAttempts) {
+                    // Check if Firebase services are available
+                    if (typeof firebaseServices !== 'undefined' && firebaseServices.usersCollection) {
+                        console.log('Firebase services ready, checking authentication...');
+                        
+                        // Check if user is authenticated
+                        const currentUser = firebaseServices.auth.currentUser;
+                        if (currentUser) {
+                            console.log('User authenticated, loading data...');
+                            await loadDashboardDataManually();
+                            return;
+                        } else {
+                            console.log('User not authenticated, waiting for auth...');
+                        }
+                    }
+                    
+                    console.log(`Waiting for Firebase services and authentication... attempt ${attempts + 1}`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                }
+                
+                console.error('Firebase services or authentication not available after waiting');
+                showDashboardError('Please log in to view dashboard data.');
+                
+            } catch (error) {
+                console.error('Error in immediate dashboard loading:', error);
+                console.error('Error details:', error.message, error.code);
+                showDashboardError(`Failed to load dashboard data: ${error.message}`);
+            }
+        }
+
+        async function loadAndroidAppStatusWidget() {
+            const androidAppStatusContainer = document.getElementById('android-app-status-container');
+            
+            try {
+                // Show loading state
+                androidAppStatusContainer.innerHTML = `
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-blue-500 rounded-md p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Android App Status</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Loading widget...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flex items-center justify-center py-8">
+                                <i data-feather="loader" class="w-6 h-6 animate-spin text-blue-500"></i>
+                                <span class="ml-2 text-gray-600">Loading Android App Status...</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                feather.replace();
+
+                // Wait for authentication before loading widget
+                let attempts = 0;
+                const maxAttempts = 10;
+                
+                while (attempts < maxAttempts) {
+                    if (typeof firebaseServices !== 'undefined' && firebaseServices.auth.currentUser) {
+                        console.log('User authenticated, loading Android App Status widget...');
+                        break;
+                    }
+                    console.log(`Waiting for authentication to load widget... attempt ${attempts + 1}`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                }
+
+                // Try to fetch the main widget first
+                let response = await fetch('widgets/android-app-status.html');
+                let html = '';
+                
+                if (!response.ok) {
+                    console.warn('Main widget failed, trying fallback...');
+                    // Try fallback widget
+                    response = await fetch('widgets/android-app-status-fallback.html');
+                    if (!response.ok) {
+                        throw new Error(`Both main and fallback widgets failed. HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+                
+                html = await response.text();
+                
+                if (!html || html.trim().length === 0) {
+                    throw new Error('Widget file is empty');
+                }
+                
+                // Load the widget
+                        androidAppStatusContainer.innerHTML = html;
+                        feather.replace();
+                
+                // Initialize widget functionality if available
+                if (window.adminAndroidSync) {
+                    window.adminAndroidSync.initializeWidget();
+                }
+                
+                console.log('Android App Status widget loaded successfully');
+                
+            } catch (error) {
+                        console.error('Error loading Android App Status widget:', error);
+                
+                // Show error state with retry option
+                androidAppStatusContainer.innerHTML = `
+                    <div class="bg-white overflow-hidden shadow rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 bg-red-500 rounded-md p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-5 w-0 flex-1">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900">Android App Status</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Widget failed to load</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="text-center py-8">
+                                <div class="flex items-center justify-center mb-4">
+                                    <i data-feather="alert-triangle" class="w-8 h-8 text-red-500"></i>
+                                </div>
+                                <h4 class="text-lg font-medium text-gray-900 mb-2">Failed to load Android App Status widget</h4>
+                                <p class="text-sm text-gray-600 mb-4">${error.message}</p>
+                                <div class="space-y-2">
+                                    <button onclick="loadAndroidAppStatusWidget()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <i data-feather="refresh-cw" class="w-4 h-4 mr-2"></i>
+                                        Retry Loading
+                                    </button>
+                                    <div class="text-xs text-gray-500">
+                                        <p>If the problem persists, check:</p>
+                                        <ul class="list-disc list-inside mt-1 space-y-1">
+                                            <li>Widget file exists at: <code class="bg-gray-100 px-1 rounded">widgets/android-app-status.html</code></li>
+                                            <li>File permissions are correct</li>
+                                            <li>Web server is running properly</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                feather.replace();
+            }
+        }
+
+        // Production dashboard data loading - matches user-management approach
+        async function loadDashboardDataManually() {
+            try {
+                console.log('Loading production dashboard data...');
+                
+                // Check if user is authenticated
+                const currentUser = firebaseServices.auth.currentUser;
+                if (!currentUser) {
+                    throw new Error('User not authenticated');
+                }
+                
+                console.log('User authenticated:', currentUser.email);
+                
+                // Load ALL users data from Firebase (same as user-management)
+                console.log('Loading users from Firebase...');
+                const usersSnapshot = await firebaseServices.usersCollection.get();
+                const users = [];
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    users.push({
+                        id: doc.id,
+                        ...userData
+                    });
+                });
+
+                console.log(`Loaded ${users.length} users from Firebase:`, users);
+
+                // Skip trips data loading - trips management removed
+                const trips = [];
+
+                // Calculate statistics (same logic as user-management)
+                const usersData = {
+                    total: users.length,
+                    teachers: users.filter(user => user.role === 'teacher').length,
+                    students: users.filter(user => user.role === 'student').length,
+                    admins: users.filter(user => user.role === 'admin').length,
+                    active: users.filter(user => user.role !== 'suspended' && user.role !== 'pending').length,
+                    allUsers: users
+                };
+
+                const tripsData = {
+                    total: 0,
+                    active: 0,
+                    planned: 0,
+                    completed: 0
+                };
+
+                console.log('Calculated statistics:', { usersData, tripsData });
+
+                // Update dashboard statistics
+                updateStatCard('total-users', usersData.total);
+                updateStatCard('teacher-count', usersData.teachers);
+                updateStatCard('student-count', usersData.students);
+                updateStatCard('active-trips', tripsData.active);
+
+                // Update recent users table
+                updateRecentUsersTable(usersData.allUsers);
+
+                // Update recent activity
+                updateRecentActivity(usersData.allUsers, trips);
+
+                console.log('Dashboard data loaded successfully!');
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                console.error('Error details:', error.message, error.code);
+                
+                // More specific error messages
+                if (error.message === 'User not authenticated') {
+                    showDashboardError('Please log in to view dashboard data.');
+                } else if (error.code === 'permission-denied') {
+                    showDashboardError('Permission denied. Please check your admin access.');
+                } else if (error.code === 'unavailable') {
+                    showDashboardError('Firebase service is currently unavailable. Please try again later.');
+                } else {
+                    showDashboardError(`Failed to load dashboard data: ${error.message}`);
+                }
+            }
+        }
+
+        function updateStatCard(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Hide loading state and show value
+                const loadingElement = document.getElementById(elementId + '-loading');
+                const valueElement = document.getElementById(elementId + '-value');
+                
+                if (loadingElement) {
+                    loadingElement.classList.add('hidden');
+                }
+                if (valueElement) {
+                    valueElement.classList.remove('hidden');
+                    valueElement.textContent = formatNumber(value);
+                } else {
+                    // Fallback for direct text update
+                    element.textContent = formatNumber(value);
+                }
+                
+                // Add animation effect
+                element.style.transform = 'scale(1.1)';
+                element.style.transition = 'transform 0.2s ease';
+                
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 100);
+            }
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function updateRecentUsersTable(users) {
+            const tableBody = document.getElementById('recent-users-table');
+            if (!tableBody) return;
+
+            // Get the 5 most recent users
+            const recentUsers = users
+                .sort((a, b) => {
+                    const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+                    const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+                    return dateB - dateA;
+                })
+                .slice(0, 5);
+
+            tableBody.innerHTML = '';
+
+            if (recentUsers.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            <i data-feather="users" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
+                            <p>No users found</p>
+                        </td>
+                    </tr>
+                `;
+                feather.replace();
+                return;
+            }
+
+            recentUsers.forEach(user => {
+                const row = createUserTableRow(user);
+                tableBody.appendChild(row);
+            });
+
+            feather.replace();
+        }
+
+        function createUserTableRow(user) {
+            const row = document.createElement('tr');
+            
+            const statusClass = getUserStatusClass(user.role);
+            const statusText = getUserStatusText(user.role);
+            const roleClass = getUserRoleClass(user.role);
+            const roleText = getUserRoleText(user.role);
+
+            // Use proper default profile picture
+            const profileImageUrl = user.profileImageUrl || getDefaultProfilePicture();
+
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                            <img class="h-10 w-10 rounded-full object-cover" src="${profileImageUrl}" alt="${user.firstName || 'User'}" onerror="this.src='${getDefaultProfilePicture()}'">
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">${user.firstName || 'Unknown'} ${user.lastName || ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${user.email || 'No email'}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">${roleText}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${statusText}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button class="text-sky-600 hover:text-sky-900" onclick="window.location.href='user-management.html'">Edit</button>
+                </td>
+            `;
+
+            return row;
+        }
+
+        function getUserStatusClass(role) {
+            switch (role) {
+                case 'admin':
+                case 'teacher':
+                case 'student':
+                    return 'bg-green-100 text-green-800';
+                case 'pending':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'suspended':
+                    return 'bg-red-100 text-red-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getUserStatusText(role) {
+            switch (role) {
+                case 'admin':
+                case 'teacher':
+                case 'student':
+                    return 'Active';
+                case 'pending':
+                    return 'Pending';
+                case 'suspended':
+                    return 'Suspended';
+                default:
+                    return 'Unknown';
+            }
+        }
+
+        function getUserRoleClass(role) {
+            switch (role) {
+                case 'admin':
+                    return 'bg-red-100 text-red-800';
+                case 'teacher':
+                    return 'bg-green-100 text-green-800';
+                case 'student':
+                    return 'bg-purple-100 text-purple-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getUserRoleText(role) {
+            return role ? role.charAt(0).toUpperCase() + role.slice(1) : 'Unknown';
+        }
+
+        function updateRecentActivity(users, trips) {
+            const activityContainer = document.querySelector('.recent-activity-container');
+            if (!activityContainer) return;
+
+            activityContainer.innerHTML = '';
+
+            // Create activity items from recent users and trips
+            const activities = [];
+            
+            // Add recent user registrations
+            users.slice(0, 3).forEach(user => {
+                activities.push({
+                    type: 'user_registration',
+                    title: `${user.firstName || 'User'} ${user.lastName || ''} registered`,
+                    subtitle: `${user.email || 'No email'} - ${formatTimeAgo(user.createdAt)}`,
+                    icon: 'user-plus',
+                    profileImage: user.profileImageUrl || getDefaultProfilePicture()
+                });
+            });
+
+            // Trips management removed - no trip activities
+
+            if (activities.length === 0) {
+                activityContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-feather="activity" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i>
+                        <p>No recent activity</p>
+                    </div>
+                `;
+                feather.replace();
+                return;
+            }
+
+            activities.forEach(activity => {
+                const activityElement = createActivityElement(activity);
+                activityContainer.appendChild(activityElement);
+            });
+
+            feather.replace();
+        }
+
+        function createActivityElement(activity) {
+            const div = document.createElement('div');
+            div.className = 'flex items-start mb-4';
+
+            div.innerHTML = `
+                <div class="flex-shrink-0">
+                    <img class="h-10 w-10 rounded-full object-cover" src="${activity.profileImage}" alt="Activity" onerror="this.src='${getDefaultProfilePicture()}'">
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">${activity.title}</p>
+                    <p class="text-sm text-gray-500">${activity.subtitle}</p>
+                </div>
+            `;
+
+            return div;
+        }
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return 'Unknown time';
+            
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMinutes < 1) return 'Just now';
+            if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+            if (diffHours < 24) return `${diffHours} hours ago`;
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString();
+        }
+
+        function getDefaultProfilePicture() {
+            // Use a proper default profile picture - a simple SVG avatar
+            return 'data:image/svg+xml;base64,' + btoa(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                    <rect width="40" height="40" fill="#f3f4f6"/>
+                    <circle cx="20" cy="16" r="6" fill="#9ca3af"/>
+                    <path d="M8 32c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#9ca3af"/>
+                </svg>
+            `);
+        }
+
+        function showDashboardError(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 bg-red-500 text-white';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i data-feather="alert-triangle" class="w-5 h-5 mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            feather.replace();
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // Toggle sidebar on mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (!sidebar.contains(event.target) && 
+                event.target !== toggleBtn && 
+                !toggleBtn.contains(event.target) &&
+                window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+
+        // Prevent sidebar toggle from closing when clicking inside sidebar
+        document.querySelector('.sidebar').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+</script>
+</body>
+</html>

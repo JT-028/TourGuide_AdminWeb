@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Backup - TourApp Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <style>
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                height: 100vh;
+                z-index: 50;
+            }
+            .flex-1 {
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.-translate-x-full + .flex-1 {
+                transform: translateX(0);
+            }
+            .sidebar:not(.-translate-x-full) + .flex-1 {
+                transform: translateX(16rem);
+            }
+        }
+
+        .active-nav-item {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .backup-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0 -translate-x-full">
+            <div class="p-4 border-b">
+                <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                    <i data-feather="compass" class="mr-2"></i>
+                    TourApp Admin
+                </h1>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+                    <a href="index.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="home" class="w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="user-management.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-check" class="w-5 h-5"></i>
+                        <span class="ml-3">User Management</span>
+                    </a>
+                </div>
+                <div class="p-4 border-t">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                    <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="ml-3">Register Users</span>
+                    </a>
+                    <a href="data-backup.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                        <i data-feather="database" class="w-5 h-5"></i>
+                        <span class="ml-3">Data Backup</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="settings" class="w-5 h-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full" src="https://static.photos/people/200x200/1" alt="Admin">
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">Admin User</p>
+                        <p class="text-xs text-gray-500">admin@cca.edu.ph</p>
+                    </div>
+                    <button onclick="logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                            <i data-feather="menu" class="w-6 h-6"></i>
+                        </button>
+                        <h2 class="ml-2 text-lg font-medium text-gray-900">Data Backup</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                        </button>
+                        <div class="relative">
+                            <input type="text" placeholder="Search..." class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Data Backup Content -->
+            <main class="p-6">
+                <!-- Backup Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Create Backup Card -->
+                    <div class="bg-white p-6 rounded-lg shadow backup-card transition duration-300">
+                        <div class="flex items-center mb-4">
+                            <div class="p-3 rounded-full bg-sky-100 text-sky-600">
+                                <i data-feather="save" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Create Backup</h3>
+                                <p class="text-sm text-gray-500">Backup all application data</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Backup Type</label>
+                                <select id="backupType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                    <option value="full">Full Backup (All Data)</option>
+                                    <option value="users">Users Only</option>
+                                    <option value="settings">Settings Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">File Format</label>
+                                <div class="flex space-x-4">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="format" value="json" checked class="text-sky-600 focus:ring-sky-500">
+                                        <span class="ml-2 text-sm text-gray-700">JSON</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="format" value="csv" class="text-sky-600 focus:ring-sky-500">
+                                        <span class="ml-2 text-sm text-gray-700">CSV</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button id="createBackupBtn" class="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition flex items-center justify-center">
+                                <i data-feather="download" class="w-4 h-4 mr-2"></i>
+                                Create Backup Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Restore Backup Card -->
+                    <div class="bg-white p-6 rounded-lg shadow backup-card transition duration-300">
+                        <div class="flex items-center mb-4">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-feather="refresh-cw" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Restore Backup</h3>
+                                <p class="text-sm text-gray-500">Restore data from backup file</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-colors hover:border-green-400 hover:bg-green-50">
+                                <i data-feather="upload" class="w-12 h-12 text-gray-400 mx-auto mb-3"></i>
+                                <p class="text-sm text-gray-600 mb-2">Drag and drop backup file here or click to browse</p>
+                                <input type="file" id="restoreFile" accept=".json,.csv" class="hidden">
+                                <label for="restoreFile" class="inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition cursor-pointer">
+                                    Choose File
+                                </label>
+                                <p class="text-xs text-gray-500 mt-2">Supports JSON and CSV formats</p>
+                                <div id="fileInfo" class="hidden mt-3 p-2 bg-green-100 rounded text-sm text-green-800 flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i data-feather="check-circle" class="w-4 h-4 inline mr-1"></i>
+                                        <span id="fileName"></span> selected
+                                    </div>
+                                    <button id="removeFile" class="text-red-600 hover:text-red-800 ml-2" title="Remove file">
+                                        <i data-feather="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button id="restoreBackupBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center" disabled>
+                                <i data-feather="upload" class="w-4 h-4 mr-2"></i>
+                                Restore Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Backups -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Recent Backups</h3>
+                        <div class="flex items-center space-x-3">
+                            <!-- Batch Actions (hidden by default) -->
+                            <div id="batchActions" class="hidden flex items-center space-x-2">
+                                <span id="selectedCount" class="text-sm text-gray-600">0 selected</span>
+                                <button id="batchDelete" class="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 flex items-center">
+                                    <i data-feather="trash-2" class="w-4 h-4 mr-1"></i>
+                                    Delete
+                                </button>
+                                <button id="batchExport" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 flex items-center">
+                                    <i data-feather="download" class="w-4 h-4 mr-1"></i>
+                                    Export
+                                </button>
+                                <button id="batchArchive" class="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 flex items-center">
+                                    <i data-feather="archive" class="w-4 h-4 mr-1"></i>
+                                    Archive
+                                </button>
+                            </div>
+                            <button id="viewArchived" class="text-sm text-gray-600 hover:text-gray-700 flex items-center">
+                                <i data-feather="archive" class="w-4 h-4 mr-1"></i>
+                                View Archived
+                            </button>
+                        <button id="refreshBackups" class="text-sm text-sky-600 hover:text-sky-700 flex items-center">
+                            <i data-feather="refresh-cw" class="w-4 h-4 mr-1"></i>
+                            Refresh
+                        </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table id="backupHistoryTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Backup Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- Backup history will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Backup Settings -->
+                <div class="mt-6 bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Backup Settings</h3>
+                        <button id="loadSettings" class="text-sm text-sky-600 hover:text-sky-700 flex items-center">
+                            <i data-feather="refresh-cw" class="w-4 h-4 mr-1"></i>
+                            Load Current Settings
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="autoBackupToggle" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500">
+                                <span class="ml-2 text-sm text-gray-700">Automatic daily backups</span>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1">Automatically create backups every day at 2:00 AM</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Backup frequency</label>
+                            <select id="backupFrequency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <option value="daily">Daily</option>
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keep backups for</label>
+                            <select id="retentionDays" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <option value="7">7 days</option>
+                                <option value="30" selected>30 days</option>
+                                <option value="90">90 days</option>
+                                <option value="365">1 year</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Backup retention limit</label>
+                            <input type="number" id="retentionLimit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500" value="50" min="1" max="1000">
+                            <p class="text-xs text-gray-500 mt-1">Maximum number of backup files to keep</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default backup type</label>
+                            <select id="defaultBackupType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <option value="full" selected>Full Backup</option>
+                                <option value="users">Users Only</option>
+                                <option value="settings">Settings Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Default file format</label>
+                            <select id="defaultFormat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500">
+                                <option value="json" selected>JSON</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="flex space-x-3">
+                                <button id="saveSettings" class="flex-1 bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition flex items-center justify-center">
+                                    <i data-feather="save" class="w-4 h-4 mr-2"></i>
+                                Save Settings
+                            </button>
+                                <button id="resetSettings" class="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition flex items-center justify-center">
+                                    <i data-feather="rotate-ccw" class="w-4 h-4 mr-2"></i>
+                                    Reset to Defaults
+                            </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Status -->
+                    <div id="settingsStatus" class="hidden mt-4 p-3 rounded-lg">
+                        <div class="flex items-center">
+                            <i data-feather="info" class="w-4 h-4 mr-2"></i>
+                            <span id="settingsStatusText"></span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Simple backup state management
+        let isBackupInProgress = false;
+        let backupHistory = [];
+        let selectedBackups = new Set();
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Data Backup page loaded');
+        feather.replace();
+            setupEventListeners();
+            loadBackupHistory();
+            loadBackupSettings(); // Load current backup settings
+        });
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (!sidebar.contains(event.target) && 
+                event.target !== toggleBtn && 
+                !toggleBtn.contains(event.target) &&
+                window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+
+        // Prevent sidebar toggle from closing when clicking inside sidebar
+        document.querySelector('.sidebar').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+            // Create backup button - single click handler
+            const createBackupBtn = document.getElementById('createBackupBtn');
+            createBackupBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                createBackup();
+            });
+
+            // Restore backup button
+            document.getElementById('restoreBackupBtn').addEventListener('click', restoreBackup);
+
+            // File input change
+            document.getElementById('restoreFile').addEventListener('change', handleFileSelection);
+
+            // Remove file button
+            document.getElementById('removeFile').addEventListener('click', removeSelectedFile);
+
+            // Drag and drop functionality
+            setupDragAndDrop();
+
+            // Refresh backups button
+            document.getElementById('refreshBackups').addEventListener('click', loadBackupHistory);
+
+            // Auto backup toggle
+            document.getElementById('autoBackupToggle').addEventListener('change', toggleAutoBackup);
+
+            // Save settings button
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+
+            // Load settings button
+            document.getElementById('loadSettings').addEventListener('click', loadBackupSettings);
+
+            // Reset settings button
+            document.getElementById('resetSettings').addEventListener('click', resetBackupSettings);
+
+            // Batch selection handlers
+            document.getElementById('selectAll').addEventListener('change', handleSelectAll);
+            document.getElementById('batchDelete').addEventListener('click', handleBatchDelete);
+            document.getElementById('batchExport').addEventListener('click', handleBatchExport);
+            document.getElementById('batchArchive').addEventListener('click', handleBatchArchive);
+            document.getElementById('viewArchived').addEventListener('click', viewArchivedBackups);
+        }
+
+        // Create backup function - completely rewritten
+        async function createBackup() {
+            // Prevent multiple simultaneous backups
+            if (isBackupInProgress) {
+                console.log('Backup already in progress, ignoring request');
+                return;
+            }
+
+            isBackupInProgress = true;
+            const backupBtn = document.getElementById('createBackupBtn');
+            const originalText = backupBtn.innerHTML;
+            
+            try {
+                console.log('Starting backup creation...');
+                
+                // Get backup options
+                const backupType = document.getElementById('backupType').value;
+                const format = document.querySelector('input[name="format"]:checked').value;
+
+                // Show info for users backup type about password inclusion
+                if (backupType === 'users' || backupType === 'full') {
+                    const result = await Swal.fire({
+                        title: 'Password Data Inclusion',
+                        html: `
+                            <div class="text-left">
+                                <p class="mb-3">This backup will include password data for user accounts:</p>
+                                <ul class="list-disc list-inside text-sm space-y-1 mb-3">
+                                    <li>🔐 User passwords (for authentication restoration)</li>
+                                    <li>🔐 Password hashes and salts</li>
+                                    <li>🔐 Password reset tokens</li>
+                                    <li>🔐 Password reset expiration dates</li>
+                                </ul>
+                                <p class="text-sm text-orange-600 font-medium">⚠️ This includes actual passwords needed for Firebase Auth restoration. Keep backup files secure.</p>
+                            </div>
+                        `,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#0ea5e9',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Continue with Backup',
+                        cancelButtonText: 'Cancel'
+                    });
+
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+                }
+                
+                // Show loading state
+            backupBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i>Creating Backup...';
+            backupBtn.disabled = true;
+            
+                console.log(`Creating ${backupType} backup in ${format} format`);
+
+                // Create backup data
+                const backupData = await generateBackupData(backupType);
+                
+                // Generate filename
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `backup_${backupType}_${timestamp}.${format}`;
+
+                console.log(`Generated filename: ${filename}`);
+
+                // Download backup
+                downloadBackup(backupData, filename, format);
+
+                // Save backup record to Firestore
+                await saveBackupRecord(filename, backupType, format, backupData);
+
+                // Show success state
+                backupBtn.innerHTML = '<i data-feather="check" class="w-4 h-4 mr-2"></i>Backup Created!';
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    backupBtn.innerHTML = originalText;
+                    backupBtn.disabled = false;
+                    isBackupInProgress = false;
+                    loadBackupHistory(); // Refresh the history table
+            }, 2000);
+
+                // Show success message
+                showSuccess('Backup created and downloaded successfully!');
+
+            } catch (error) {
+                console.error('Backup creation error:', error);
+                
+                // Reset button on error
+                backupBtn.innerHTML = originalText;
+                backupBtn.disabled = false;
+                isBackupInProgress = false;
+                
+                showError(`Backup creation failed: ${error.message}`);
+            }
+        }
+
+        // Generate backup data - simplified and reliable
+        async function generateBackupData(backupType) {
+            const backupData = {
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    backupType: backupType,
+                    version: '2.0',
+                    createdBy: firebase.auth().currentUser?.uid || 'admin',
+                    appVersion: '1.0.0',
+                    includesPasswordData: backupType === 'users' || backupType === 'full',
+                    securityNote: 'This backup contains password data needed for Firebase Auth restoration. Keep secure.'
+                }
+            };
+
+            try {
+                switch (backupType) {
+                    case 'full':
+                        console.log('Fetching full backup data...');
+                        backupData.users = await getCollectionDataWithPasswords('users');
+                        backupData.messages = await getCollectionData('messages');
+                        backupData.locations = await getCollectionData('locations');
+                        backupData.settings = await getSettingsData();
+                        break;
+                    case 'users':
+                        console.log('Fetching users data...');
+                        backupData.users = await getCollectionDataWithPasswords('users');
+                        break;
+                    case 'settings':
+                        console.log('Fetching settings data...');
+                        backupData.settings = await getSettingsData();
+                        break;
+                }
+
+                console.log('Backup data generated successfully');
+                return backupData;
+            } catch (error) {
+                console.error('Error generating backup data:', error);
+                throw error;
+            }
+        }
+
+        // Get collection data - enhanced to include password data
+        async function getCollectionData(collectionName) {
+            try {
+                console.log(`Fetching ${collectionName} collection...`);
+                const snapshot = await firebase.firestore().collection(collectionName).get();
+                const data = [];
+                
+                snapshot.forEach(doc => {
+                    const docData = doc.data();
+                    const processedData = processFirestoreData(docData);
+                    
+                    // For users collection, ensure password data is included
+                    if (collectionName === 'users') {
+                        // Check for password in various possible fields
+                        const password = docData.password || docData.passwordHash || docData.encryptedPassword || null;
+                        
+                        // Include password data (whatever format it's stored in)
+                        processedData.password = password;
+                        processedData.passwordHash = docData.passwordHash || null;
+                        processedData.salt = docData.salt || null;
+                        processedData.passwordResetToken = docData.passwordResetToken || null;
+                        processedData.passwordResetExpires = docData.passwordResetExpires || null;
+                    }
+                    
+                    data.push({
+                        id: doc.id,
+                        ...processedData
+                    });
+                });
+
+                console.log(`Fetched ${data.length} documents from ${collectionName}`);
+                return data;
+            } catch (error) {
+                console.error(`Error getting ${collectionName} data:`, error);
+                return [];
+            }
+        }
+
+        // Process Firestore data - handle timestamps and nested objects
+        function processFirestoreData(data) {
+            const processed = {};
+            for (const [key, value] of Object.entries(data)) {
+                if (value && typeof value === 'object' && value.toDate) {
+                    // Firestore timestamp
+                    processed[key] = value.toDate().toISOString();
+                } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+                    // Nested object
+                    processed[key] = processFirestoreData(value);
+                } else if (Array.isArray(value)) {
+                    // Array
+                    processed[key] = value.map(item => 
+                        typeof item === 'object' ? processFirestoreData(item) : item
+                    );
+                } else {
+                    processed[key] = value;
+                }
+            }
+            return processed;
+        }
+
+        // Get settings data
+        async function getSettingsData() {
+            try {
+                const settingsDoc = await firebase.firestore().collection('settings').doc('system').get();
+                return settingsDoc.exists ? processFirestoreData(settingsDoc.data()) : getDefaultSettings();
+            } catch (error) {
+                console.error('Error getting settings:', error);
+                return getDefaultSettings();
+            }
+        }
+
+        // Get default settings
+        function getDefaultSettings() {
+            return {
+                schoolName: 'Colegio de San Agustin',
+                schoolCode: 'CCA',
+                emailNotifications: true,
+                smsAlerts: true,
+                autoLogoutTimer: 30,
+                passwordRequirements: {
+                    minLength: 8,
+                    requireUppercase: true,
+                    requireNumbers: true,
+                    requireSpecialChars: false
+                },
+                backupSettings: {
+                    autoBackup: false,
+                    backupFrequency: 'weekly',
+                    retentionDays: 30
+                }
+            };
+        }
+
+        // Download backup - simplified and reliable
+        function downloadBackup(data, filename, format) {
+            try {
+                console.log(`Downloading backup: ${filename}`);
+                
+                let content;
+                let mimeType;
+                
+                if (format === 'json') {
+                    content = JSON.stringify(data, null, 2);
+                    mimeType = 'application/json';
+                } else if (format === 'csv') {
+                    content = convertToCSV(data);
+                    mimeType = 'text/csv';
+                } else {
+                    throw new Error('Unsupported format');
+                }
+                
+                // Create blob and download
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up
+                window.URL.revokeObjectURL(url);
+                
+                console.log('Download completed successfully');
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                throw error;
+            }
+        }
+
+        // Convert to CSV - enhanced to include password data
+        function convertToCSV(data) {
+            if (data.users && Array.isArray(data.users)) {
+                const headers = [
+                    'ID', 'Email', 'First Name', 'Last Name', 'Role', 'Phone', 'Student ID', 
+                    'Course', 'Section', 'Year Level', 'Department', 'Specialization', 
+                    'Password', 'Password Hash', 'Salt', 'Password Reset Token', 'Password Reset Expires',
+                    'Created At', 'Last Login'
+                ];
+                const rows = data.users.map(user => [
+                    user.id || '',
+                    user.email || '',
+                    user.firstName || '',
+                    user.lastName || '',
+                    user.role || '',
+                    user.phoneNumber || '',
+                    user.studentId || '',
+                    user.course || '',
+                    user.section || '',
+                    user.yearLevel || '',
+                    user.department || '',
+                    user.specialization || '',
+                    user.password || '',
+                    user.passwordHash || '',
+                    user.salt || '',
+                    user.passwordResetToken || '',
+                    user.passwordResetExpires || '',
+                    user.createdAt || '',
+                    user.lastLogin || ''
+                ]);
+                
+                return [headers, ...rows].map(row => 
+                    row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',')
+                ).join('\n');
+            }
+            
+            return JSON.stringify(data, null, 2);
+        }
+
+         // Save backup record and data to Firebase Storage
+         async function saveBackupRecord(filename, backupType, format, backupData) {
+             try {
+                 console.log('Saving backup record and data...');
+                 
+                 // First, save the backup data to Firebase Storage
+                 const storageRef = firebase.storage().ref(`backups/${filename}`);
+                 const backupJson = JSON.stringify(backupData, null, 2);
+                 const blob = new Blob([backupJson], { type: 'application/json' });
+                 
+                 console.log('Uploading backup data to Firebase Storage...');
+                 const uploadTask = await storageRef.put(blob);
+                 console.log('Backup data uploaded to Firebase Storage successfully');
+                 
+                 // Get the download URL
+                 const downloadURL = await storageRef.getDownloadURL();
+                 
+                 // Save backup record to Firestore with storage reference
+                 const backupRecord = {
+                     filename: filename,
+                     backupType: backupType,
+                     format: format,
+                     size: JSON.stringify(backupData).length,
+                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                     createdBy: firebase.auth().currentUser?.uid || 'admin',
+                     status: 'complete',
+                     metadata: backupData.metadata,
+                     storagePath: `backups/${filename}`,
+                     downloadURL: downloadURL,
+                     storageSize: uploadTask.metadata.size
+                 };
+
+                 await firebase.firestore().collection('backups').add(backupRecord);
+                 console.log('Backup record saved to Firestore successfully');
+                 
+             } catch (error) {
+                 console.error('Error saving backup record:', error);
+                 throw error;
+             }
+         }
+
+        // Load backup history - simplified
+        async function loadBackupHistory() {
+            try {
+                console.log('Loading backup history...');
+                
+                const snapshot = await firebase.firestore().collection('backups')
+                    .where('archived', '==', false)
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+
+                backupHistory = [];
+                snapshot.forEach(doc => {
+                    backupHistory.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                console.log(`Loaded ${backupHistory.length} backup records`);
+                renderBackupHistory();
+            } catch (error) {
+                console.error('Error loading backup history:', error);
+                // Fallback: load all backups if the query fails
+                try {
+                    const fallbackSnapshot = await firebase.firestore().collection('backups')
+                        .orderBy('createdAt', 'desc')
+                        .limit(20)
+                        .get();
+
+                    backupHistory = [];
+                    fallbackSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        // Only include non-archived items in fallback
+                        if (!data.archived) {
+                            backupHistory.push({
+                                id: doc.id,
+                                ...data
+                            });
+                        }
+                    });
+                    renderBackupHistory();
+                } catch (fallbackError) {
+                    console.error('Fallback query also failed:', fallbackError);
+                }
+            }
+        }
+
+        // Render backup history - simplified
+        function renderBackupHistory() {
+            const tableBody = document.querySelector('#backupHistoryTable tbody');
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '';
+
+            if (backupHistory.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No backup records found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            backupHistory.forEach(backup => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="checkbox" class="backup-checkbox rounded border-gray-300 text-sky-600 focus:ring-sky-500" 
+                               data-backup-id="${backup.id}" onchange="handleBackupSelection('${backup.id}', this.checked)">
+                    </td>
+                     <td class="px-6 py-4 whitespace-nowrap">
+                         <div class="flex items-center">
+                             <i data-feather="file" class="w-5 h-5 text-gray-400 mr-3"></i>
+                             <div>
+                                 <div class="text-sm font-medium text-gray-900">${backup.filename}</div>
+                                 <div class="text-sm text-gray-500">
+                                     ${formatFileSize(backup.size)}
+                                     ${backup.storagePath ? ' • Stored' : ' • Local only'}
+                                 </div>
+                             </div>
+                         </div>
+                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getBackupTypeClass(backup.backupType)}">
+                            ${getBackupTypeText(backup.backupType)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatFileSize(backup.size)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatDate(backup.createdAt)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            ${backup.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div class="flex space-x-1">
+                            <button class="text-blue-600 hover:text-blue-900 p-1" title="View Details" onclick="viewBackupDetails('${backup.id}')">
+                                <i data-feather="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button class="text-green-600 hover:text-green-900 p-1" title="Download" onclick="downloadBackupRecord('${backup.id}')">
+                                <i data-feather="download" class="w-4 h-4"></i>
+                            </button>
+                            <button class="text-yellow-600 hover:text-yellow-900 p-1" title="Archive" onclick="archiveBackup('${backup.id}')">
+                                <i data-feather="archive" class="w-4 h-4"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900 p-1" title="Delete" onclick="deleteBackupRecord('${backup.id}')">
+                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Refresh feather icons
+            feather.replace();
+        }
+
+        // Delete backup record - simplified
+        async function deleteBackupRecord(backupId) {
+            const result = await Swal.fire({
+                title: 'Delete Backup Record?',
+                text: 'This will permanently delete the backup record from the database.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await firebase.firestore().collection('backups').doc(backupId).delete();
+                    showSuccess('Backup record deleted successfully!');
+                    loadBackupHistory();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showError(`Delete failed: ${error.message}`);
+                }
+            }
+        }
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('restoreFile');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Highlight drop zone when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            // Handle dropped files
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight(e) {
+                dropZone.classList.add('border-green-500', 'bg-green-100');
+                dropZone.classList.remove('border-gray-300');
+            }
+
+            function unhighlight(e) {
+                dropZone.classList.remove('border-green-500', 'bg-green-100');
+                dropZone.classList.add('border-gray-300');
+            }
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'application/json' || file.type === 'text/csv' || 
+                        file.name.endsWith('.json') || file.name.endsWith('.csv')) {
+                        // Create a new FileList-like object
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        fileInput.files = dataTransfer.files;
+                        
+                        // Update UI
+                        fileName.textContent = file.name;
+                        fileInfo.classList.remove('hidden');
+                        document.getElementById('restoreBackupBtn').disabled = false;
+                        document.getElementById('restoreBackupBtn').innerHTML = '<i data-feather="upload" class="w-4 h-4 mr-2"></i>Restore Backup';
+                        
+                        feather.replace();
+                    } else {
+                        showError('Please select a valid JSON or CSV backup file.');
+                    }
+                }
+            }
+        }
+
+        // Handle file selection - enhanced
+        function handleFileSelection(e) {
+            const file = e.target.files[0];
+            const restoreBtn = document.getElementById('restoreBackupBtn');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            
+            if (file) {
+                // Validate file type
+                if (file.type === 'application/json' || file.type === 'text/csv' || 
+                    file.name.endsWith('.json') || file.name.endsWith('.csv')) {
+                restoreBtn.disabled = false;
+                restoreBtn.innerHTML = '<i data-feather="upload" class="w-4 h-4 mr-2"></i>Restore Backup';
+                    
+                    // Show file info
+                    fileName.textContent = file.name;
+                    fileInfo.classList.remove('hidden');
+                    feather.replace();
+            } else {
+                    showError('Please select a valid JSON or CSV backup file.');
+                restoreBtn.disabled = true;
+                    fileInfo.classList.add('hidden');
+                }
+            } else {
+                restoreBtn.disabled = true;
+                fileInfo.classList.add('hidden');
+            }
+        }
+
+        // Remove selected file
+        function removeSelectedFile() {
+            const fileInput = document.getElementById('restoreFile');
+            const restoreBtn = document.getElementById('restoreBackupBtn');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            // Clear the file input
+            fileInput.value = '';
+            
+            // Reset UI
+            restoreBtn.disabled = true;
+            restoreBtn.innerHTML = '<i data-feather="upload" class="w-4 h-4 mr-2"></i>Restore Backup';
+            fileInfo.classList.add('hidden');
+            
+            // Show success message
+            showSuccess('File removed successfully. You can now select a different backup file.');
+        }
+
+        // Restore backup - fully functional
+        async function restoreBackup() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select a backup file to restore.');
+                return;
+            }
+
+            const result = await Swal.fire({
+                 title: 'Intelligent Backup Restore',
+                 html: `
+                     <div class="text-left">
+                         <p class="mb-3">This will intelligently restore data from the backup file:</p>
+                         <ul class="list-disc list-inside text-sm space-y-1 mb-3">
+                             <li>✅ Only missing data will be created</li>
+                             <li>✅ Only changed data will be updated</li>
+                             <li>✅ Existing unchanged data will be skipped</li>
+                             <li>✅ No duplicates will be created</li>
+                         </ul>
+                         <p class="text-sm text-gray-600">This process is safe and will not overwrite existing data unnecessarily.</p>
+                     </div>
+                 `,
+                 icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                 confirmButtonText: 'Yes, restore intelligently!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            const restoreBtn = document.getElementById('restoreBackupBtn');
+                const originalText = restoreBtn.innerHTML;
+                
+            try {
+                restoreBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i>Restoring...';
+                restoreBtn.disabled = true;
+                
+                const text = await file.text();
+                const backupData = JSON.parse(text);
+
+                // Validate backup data
+                if (!backupData.metadata) {
+                    throw new Error('Invalid backup file format. Missing metadata.');
+                }
+
+                console.log('Starting restore process...', backupData.metadata);
+
+                // Show progress dialog
+                let progressDialog;
+                Swal.fire({
+                    title: 'Restoring Backup...',
+                    html: `
+                        <div class="text-left">
+                            <div class="mb-2">Backup Type: ${getBackupTypeText(backupData.metadata.backupType)}</div>
+                            <div class="mb-2">Created: ${new Date(backupData.metadata.timestamp).toLocaleString()}</div>
+                            <div class="mb-4">Version: ${backupData.metadata.version || '1.0'}</div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="restoreProgress" class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div id="restoreStatus" class="mt-2 text-sm text-gray-600">Initializing...</div>
+                        </div>
+                    `,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        progressDialog = Swal.getHtmlContainer();
+                    }
+                });
+
+                 // Restore data based on backup type
+                 const restoreResults = await restoreBackupData(backupData, progressDialog);
+
+                 // Close progress dialog
+                 Swal.close();
+
+                    restoreBtn.innerHTML = '<i data-feather="check" class="w-4 h-4 mr-2"></i>Restore Complete!';
+                
+                    setTimeout(() => {
+                        restoreBtn.innerHTML = originalText;
+                        restoreBtn.disabled = true;
+                    fileInput.value = '';
+                     document.getElementById('fileInfo').classList.add('hidden');
+                }, 2000);
+
+                 // Show detailed success message with restoration summary
+                 const totalCreated = restoreResults.users.created + restoreResults.messages.created + restoreResults.locations.created;
+                 const totalUpdated = restoreResults.users.updated + restoreResults.messages.updated + restoreResults.locations.updated;
+                 const totalSkipped = restoreResults.users.skipped + restoreResults.messages.skipped + restoreResults.locations.skipped;
+                 
+                 let summaryMessage = 'Backup restoration completed successfully!\n\n';
+                 summaryMessage += `📊 Restoration Summary:\n`;
+                 summaryMessage += `• New records created: ${totalCreated}\n`;
+                 summaryMessage += `• Existing records updated: ${totalUpdated}\n`;
+                 summaryMessage += `• Records unchanged: ${totalSkipped}\n`;
+                 
+                 if (restoreResults.settings.restored) {
+                     summaryMessage += `• Settings: Updated\n`;
+                 } else {
+                     summaryMessage += `• Settings: No changes needed\n`;
+                 }
+                 
+                 summaryMessage += `\n✅ Only missing or changed data was restored to prevent duplicates.`;
+                 
+                 showSuccess(summaryMessage);
+
+            } catch (error) {
+                console.error('Restore error:', error);
+                Swal.close();
+                restoreBtn.innerHTML = originalText;
+                restoreBtn.disabled = false;
+                showError(`Restore failed: ${error.message}`);
+            }
+        }
+
+         // Restore backup data to Firestore with intelligent duplicate checking
+         async function restoreBackupData(backupData, progressDialog) {
+             const updateProgress = (percent, status) => {
+                 const progressBar = document.getElementById('restoreProgress');
+                 const statusText = document.getElementById('restoreStatus');
+                 if (progressBar) progressBar.style.width = percent + '%';
+                 if (statusText) statusText.textContent = status;
+             };
+
+             try {
+                 updateProgress(5, 'Validating backup data...');
+
+                 // Validate backup structure
+                 if (!backupData.metadata || !backupData.metadata.backupType) {
+                     throw new Error('Invalid backup file structure.');
+                 }
+
+                 updateProgress(10, 'Analyzing database content...');
+                 
+                 const restoreResults = {
+                     users: { total: 0, created: 0, updated: 0, skipped: 0 },
+                     messages: { total: 0, created: 0, updated: 0, skipped: 0 },
+                     locations: { total: 0, created: 0, updated: 0, skipped: 0 },
+                     settings: { restored: false }
+                 };
+
+                 // Restore users with intelligent checking
+                 if (backupData.users && Array.isArray(backupData.users)) {
+                     updateProgress(20, `Analyzing ${backupData.users.length} users in backup...`);
+                     const userResults = await restoreCollection('users', backupData.users);
+                     restoreResults.users = userResults;
+                     updateProgress(40, `Users: ${userResults.created} new, ${userResults.updated} updated, ${userResults.skipped} skipped`);
+                     
+                     // Also restore to Firebase Auth if passwords are available
+                     updateProgress(45, 'Restoring user authentication...');
+                     await restoreFirebaseAuthUsers(backupData.users);
+                 }
+
+                 // Restore messages with intelligent checking
+                 if (backupData.messages && Array.isArray(backupData.messages)) {
+                     updateProgress(50, `Analyzing ${backupData.messages.length} messages in backup...`);
+                     const messageResults = await restoreCollection('messages', backupData.messages);
+                     restoreResults.messages = messageResults;
+                     updateProgress(70, `Messages: ${messageResults.created} new, ${messageResults.updated} updated, ${messageResults.skipped} skipped`);
+                 }
+
+                 // Restore locations with intelligent checking
+                 if (backupData.locations && Array.isArray(backupData.locations)) {
+                     updateProgress(75, `Analyzing ${backupData.locations.length} locations in backup...`);
+                     const locationResults = await restoreCollection('locations', backupData.locations);
+                     restoreResults.locations = locationResults;
+                     updateProgress(85, `Locations: ${locationResults.created} new, ${locationResults.updated} updated, ${locationResults.skipped} skipped`);
+                 }
+
+                 // Restore settings with intelligent checking
+                 if (backupData.settings) {
+                     updateProgress(90, 'Checking and restoring system settings...');
+                     const settingsRestored = await restoreSettingsIntelligent(backupData.settings);
+                     restoreResults.settings.restored = settingsRestored;
+                     updateProgress(95, settingsRestored ? 'Settings updated' : 'Settings unchanged');
+                 }
+
+                 updateProgress(100, 'Restore analysis completed!');
+                 
+                 // Log detailed results
+                 console.log('Restore completed with results:', restoreResults);
+                 
+                 // Show detailed results to user
+                 const totalCreated = restoreResults.users.created + restoreResults.messages.created + restoreResults.locations.created;
+                 const totalUpdated = restoreResults.users.updated + restoreResults.messages.updated + restoreResults.locations.updated;
+                 const totalSkipped = restoreResults.users.skipped + restoreResults.messages.skipped + restoreResults.locations.skipped;
+                 
+                 updateProgress(100, `Complete: ${totalCreated} new, ${totalUpdated} updated, ${totalSkipped} unchanged`);
+                 
+                 // Return results for use in success message
+                 return restoreResults;
+
+             } catch (error) {
+                 console.error('Error during restore:', error);
+                 throw error;
+             }
+         }
+
+         // Restore a collection with intelligent duplicate checking
+         async function restoreCollection(collectionName, documents) {
+             try {
+                 console.log(`Starting intelligent restore for ${documents.length} documents to ${collectionName} collection`);
+                 
+                 // First, get all existing documents in the collection
+                 const existingSnapshot = await firebase.firestore().collection(collectionName).get();
+                 const existingDocs = new Map();
+                 
+                 existingSnapshot.forEach(doc => {
+                     existingDocs.set(doc.id, doc.data());
+                 });
+                 
+                 console.log(`Found ${existingDocs.size} existing documents in ${collectionName}`);
+                 
+                 // Filter out documents that already exist
+                 const documentsToRestore = [];
+                 const skippedDocuments = [];
+                 const updatedDocuments = [];
+                 
+                 documents.forEach(backupDoc => {
+                     const docId = backupDoc.id;
+                     const existingDoc = existingDocs.get(docId);
+                     
+                     if (!existingDoc) {
+                         // Document doesn't exist, add to restore list
+                         documentsToRestore.push(backupDoc);
+                     } else {
+                         // Document exists, check if it needs updating
+                         const { id, ...backupData } = backupDoc;
+                         const needsUpdate = shouldUpdateDocument(existingDoc, backupData);
+                         
+                         if (needsUpdate) {
+                             updatedDocuments.push(backupDoc);
+                         } else {
+                             skippedDocuments.push(docId);
+                         }
+                     }
+                 });
+                 
+                 console.log(`Restore plan for ${collectionName}:`);
+                 console.log(`- New documents to create: ${documentsToRestore.length}`);
+                 console.log(`- Existing documents to update: ${updatedDocuments.length}`);
+                 console.log(`- Documents to skip (no changes): ${skippedDocuments.length}`);
+                 
+                 let totalProcessed = 0;
+                 
+                 // Restore new documents
+                 if (documentsToRestore.length > 0) {
+                     totalProcessed += await processDocumentBatch(collectionName, documentsToRestore, 'create');
+                 }
+                 
+                 // Update existing documents that need changes
+                 if (updatedDocuments.length > 0) {
+                     totalProcessed += await processDocumentBatch(collectionName, updatedDocuments, 'update');
+                 }
+                 
+                 console.log(`Successfully processed ${totalProcessed} documents in ${collectionName}`);
+                 
+                 return {
+                     total: documents.length,
+                     created: documentsToRestore.length,
+                     updated: updatedDocuments.length,
+                     skipped: skippedDocuments.length,
+                     processed: totalProcessed
+                 };
+                 
+             } catch (error) {
+                 console.error(`Error restoring ${collectionName} collection:`, error);
+                 throw new Error(`Failed to restore ${collectionName}: ${error.message}`);
+             }
+         }
+         
+         // Check if a document needs updating by comparing data
+         function shouldUpdateDocument(existingDoc, backupData) {
+             // Compare key fields to determine if update is needed
+             const keyFields = ['email', 'firstName', 'lastName', 'role', 'phoneNumber', 'studentId'];
+             
+             for (const field of keyFields) {
+                 if (backupData[field] !== undefined && existingDoc[field] !== backupData[field]) {
+                     return true;
+                 }
+             }
+             
+             // Check for missing fields in existing document
+             for (const [key, value] of Object.entries(backupData)) {
+                 if (existingDoc[key] === undefined && value !== undefined) {
+                     return true;
+                 }
+             }
+             
+             return false;
+         }
+         
+         // Process a batch of documents (create or update)
+         async function processDocumentBatch(collectionName, documents, operation) {
+             const batchSize = 500;
+             let processedCount = 0;
+             
+             for (let i = 0; i < documents.length; i += batchSize) {
+                 const batch = firebase.firestore().batch();
+                 const batchDocs = documents.slice(i, i + batchSize);
+                 
+                 batchDocs.forEach(docData => {
+                     const docRef = firebase.firestore().collection(collectionName).doc(docData.id);
+                     const { id, ...data } = docData;
+                     
+                     if (operation === 'create') {
+                         batch.set(docRef, data);
+                     } else if (operation === 'update') {
+                         batch.update(docRef, data);
+                     }
+                 });
+                 
+                 await batch.commit();
+                 processedCount += batchDocs.length;
+                 
+                 console.log(`Processed ${processedCount}/${documents.length} documents for ${operation} operation`);
+             }
+             
+             return processedCount;
+         }
+
+         // Restore Firebase Auth users
+         async function restoreFirebaseAuthUsers(users) {
+             try {
+                 console.log('Restoring users to Firebase Auth...');
+                 let authRestored = 0;
+                 let authSkipped = 0;
+                 
+                 for (const user of users) {
+                     try {
+                         // Check if user already exists in Firebase Auth
+                         const existingUser = await firebase.auth().getUserByEmail(user.email).catch(() => null);
+                         
+                         if (existingUser) {
+                             console.log(`User ${user.email} already exists in Firebase Auth, skipping`);
+                             authSkipped++;
+                             continue;
+                         }
+                         
+                         // Only create Firebase Auth user if we have a password
+                         if (user.password && user.password !== 'password_not_available') {
+                             await firebase.auth().createUser({
+                                 uid: user.uid || user.id,
+                                 email: user.email,
+                                 password: user.password,
+                                 displayName: `${user.firstName} ${user.lastName}`,
+                                 emailVerified: user.isEmailVerified || false
+                             });
+                             
+                             console.log(`Created Firebase Auth user: ${user.email}`);
+                             authRestored++;
+                         } else {
+                             console.log(`Skipping Firebase Auth creation for ${user.email} - no password available`);
+                             authSkipped++;
+                         }
+                     } catch (authError) {
+                         console.error(`Error creating Firebase Auth user for ${user.email}:`, authError);
+                         authSkipped++;
+                     }
+                 }
+                 
+                 console.log(`Firebase Auth restoration complete: ${authRestored} created, ${authSkipped} skipped`);
+                 return { created: authRestored, skipped: authSkipped };
+                 
+             } catch (error) {
+                 console.error('Error restoring Firebase Auth users:', error);
+                 throw new Error(`Failed to restore Firebase Auth users: ${error.message}`);
+             }
+         }
+
+         // Restore settings with intelligent checking
+         async function restoreSettingsIntelligent(backupSettings) {
+             try {
+                 console.log('Checking system settings for restoration');
+                 
+                 // Get current settings
+                 const settingsRef = firebase.firestore().collection('settings').doc('system');
+                 const currentSettingsDoc = await settingsRef.get();
+                 const currentSettings = currentSettingsDoc.exists ? currentSettingsDoc.data() : {};
+                 
+                 // Check if settings need updating
+                 const needsUpdate = shouldUpdateSettings(currentSettings, backupSettings);
+                 
+                 if (needsUpdate) {
+                     console.log('Settings need updating, applying backup settings');
+                     await settingsRef.set(backupSettings, { merge: true });
+                     console.log('Settings updated successfully');
+                     return true;
+                 } else {
+                     console.log('Settings are up to date, no changes needed');
+                     return false;
+                 }
+             } catch (error) {
+                 console.error('Error restoring settings:', error);
+                 throw new Error(`Failed to restore settings: ${error.message}`);
+             }
+         }
+        
+        // Check if settings need updating
+        function shouldUpdateSettings(currentSettings, backupSettings) {
+            // Compare key settings fields
+            const keySettingsFields = [
+                'schoolName', 'schoolCode', 'emailNotifications', 'smsAlerts', 
+                'autoLogoutTimer', 'passwordRequirements', 'backupSettings'
+            ];
+            
+            for (const field of keySettingsFields) {
+                if (backupSettings[field] !== undefined) {
+                    if (JSON.stringify(currentSettings[field]) !== JSON.stringify(backupSettings[field])) {
+                        return true;
+                    }
+                }
+            }
+            
+            // Check for missing fields in current settings
+            for (const [key, value] of Object.entries(backupSettings)) {
+                if (currentSettings[key] === undefined && value !== undefined) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // Load backup settings from Firestore
+        async function loadBackupSettings() {
+            try {
+                console.log('Loading backup settings...');
+                const settingsRef = firebase.firestore().collection('settings').doc('system');
+                const settingsDoc = await settingsRef.get();
+                
+                let backupSettings = getDefaultBackupSettings();
+                
+                if (settingsDoc.exists) {
+                    const data = settingsDoc.data();
+                    if (data.backupSettings) {
+                        backupSettings = { ...backupSettings, ...data.backupSettings };
+                    }
+                }
+                
+                // Update UI with loaded settings
+                document.getElementById('autoBackupToggle').checked = backupSettings.autoBackup || false;
+                document.getElementById('backupFrequency').value = backupSettings.backupFrequency || 'weekly';
+                document.getElementById('retentionDays').value = backupSettings.retentionDays || 30;
+                document.getElementById('retentionLimit').value = backupSettings.retentionLimit || 50;
+                document.getElementById('defaultBackupType').value = backupSettings.defaultBackupType || 'full';
+                document.getElementById('defaultFormat').value = backupSettings.defaultFormat || 'json';
+                
+                showSettingsStatus('Settings loaded successfully', 'success');
+                console.log('Backup settings loaded:', backupSettings);
+                
+            } catch (error) {
+                console.error('Error loading backup settings:', error);
+                showSettingsStatus('Failed to load settings. Using defaults.', 'error');
+                // Load default settings on error
+                loadDefaultSettings();
+            }
+        }
+
+        // Save backup settings to Firestore
+        async function saveSettings() {
+            try {
+                const saveBtn = document.getElementById('saveSettings');
+                const originalText = saveBtn.innerHTML;
+                
+                // Show loading state
+                saveBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i>Saving...';
+                saveBtn.disabled = true;
+                
+                // Collect settings from UI
+                const backupSettings = {
+                    autoBackup: document.getElementById('autoBackupToggle').checked,
+                    backupFrequency: document.getElementById('backupFrequency').value,
+                    retentionDays: parseInt(document.getElementById('retentionDays').value),
+                    retentionLimit: parseInt(document.getElementById('retentionLimit').value),
+                    defaultBackupType: document.getElementById('defaultBackupType').value,
+                    defaultFormat: document.getElementById('defaultFormat').value,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedBy: firebase.auth().currentUser?.uid || 'admin'
+                };
+                
+                // Validate settings
+                if (backupSettings.retentionDays < 1 || backupSettings.retentionDays > 365) {
+                    throw new Error('Retention days must be between 1 and 365');
+                }
+                
+                if (backupSettings.retentionLimit < 1 || backupSettings.retentionLimit > 1000) {
+                    throw new Error('Retention limit must be between 1 and 1000');
+                }
+                
+                // Save to Firestore
+                const settingsRef = firebase.firestore().collection('settings').doc('system');
+                await settingsRef.set({
+                    backupSettings: backupSettings
+                }, { merge: true });
+                
+                // Reset button
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                feather.replace();
+                
+                showSettingsStatus('Settings saved successfully!', 'success');
+                showSuccess('Backup settings saved successfully!');
+                
+                console.log('Backup settings saved:', backupSettings);
+                
+            } catch (error) {
+                console.error('Error saving backup settings:', error);
+                
+                // Reset button on error
+                const saveBtn = document.getElementById('saveSettings');
+                saveBtn.innerHTML = '<i data-feather="save" class="w-4 h-4 mr-2"></i>Save Settings';
+                saveBtn.disabled = false;
+                feather.replace();
+                
+                showSettingsStatus(`Failed to save settings: ${error.message}`, 'error');
+                showError(`Failed to save settings: ${error.message}`);
+            }
+        }
+
+        // Reset settings to defaults
+        async function resetBackupSettings() {
+            const result = await Swal.fire({
+                title: 'Reset Settings?',
+                text: 'This will reset all backup settings to their default values.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, reset!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    loadDefaultSettings();
+                    await saveSettings();
+                    showSuccess('Settings reset to defaults successfully!');
+                } catch (error) {
+                    console.error('Error resetting settings:', error);
+                    showError(`Failed to reset settings: ${error.message}`);
+                }
+            }
+        }
+
+        // Load default settings into UI
+        function loadDefaultSettings() {
+            const defaultSettings = getDefaultBackupSettings();
+            
+            document.getElementById('autoBackupToggle').checked = defaultSettings.autoBackup;
+            document.getElementById('backupFrequency').value = defaultSettings.backupFrequency;
+            document.getElementById('retentionDays').value = defaultSettings.retentionDays;
+            document.getElementById('retentionLimit').value = defaultSettings.retentionLimit;
+            document.getElementById('defaultBackupType').value = defaultSettings.defaultBackupType;
+            document.getElementById('defaultFormat').value = defaultSettings.defaultFormat;
+            
+            showSettingsStatus('Default settings loaded', 'info');
+        }
+
+        // Get default backup settings
+        function getDefaultBackupSettings() {
+            return {
+                autoBackup: false,
+                        backupFrequency: 'weekly',
+                retentionDays: 30,
+                retentionLimit: 50,
+                defaultBackupType: 'full',
+                defaultFormat: 'json',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: firebase.auth().currentUser?.uid || 'admin'
+            };
+        }
+
+        // Show settings status message
+        function showSettingsStatus(message, type) {
+            const statusDiv = document.getElementById('settingsStatus');
+            const statusText = document.getElementById('settingsStatusText');
+            
+            if (!statusDiv || !statusText) return;
+            
+            // Remove existing classes
+            statusDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
+            
+            // Add appropriate classes based on type
+            switch (type) {
+                case 'success':
+                    statusDiv.classList.add('bg-green-100', 'text-green-800');
+                    break;
+                case 'error':
+                    statusDiv.classList.add('bg-red-100', 'text-red-800');
+                    break;
+                case 'info':
+                default:
+                    statusDiv.classList.add('bg-blue-100', 'text-blue-800');
+                    break;
+            }
+            
+            statusText.textContent = message;
+            statusDiv.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Toggle auto backup - enhanced
+        async function toggleAutoBackup(e) {
+            try {
+                const settingsRef = firebase.firestore().collection('settings').doc('system');
+                await settingsRef.set({
+                    backupSettings: {
+                        autoBackup: e.target.checked,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: firebase.auth().currentUser?.uid || 'admin'
+                    }
+                }, { merge: true });
+
+                showSettingsStatus(`Auto backup ${e.target.checked ? 'enabled' : 'disabled'}`, 'success');
+                showSuccess(`Auto backup ${e.target.checked ? 'enabled' : 'disabled'}`);
+            } catch (error) {
+                console.error('Error updating auto backup setting:', error);
+                showSettingsStatus('Failed to update auto backup setting', 'error');
+                showError('Failed to update auto backup setting');
+                
+                // Revert checkbox state on error
+                e.target.checked = !e.target.checked;
+            }
+        }
+
+        // Utility functions
+        function getBackupTypeClass(type) {
+            switch (type) {
+                case 'full': return 'bg-blue-100 text-blue-800';
+                case 'users': return 'bg-purple-100 text-purple-800';
+                case 'settings': return 'bg-gray-100 text-gray-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getBackupTypeText(type) {
+            switch (type) {
+                case 'full': return 'Full Backup';
+                case 'users': return 'Users Only';
+                case 'settings': return 'Settings Only';
+                default: return 'Unknown';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // Alert functions - using SweetAlert2
+        function showSuccess(message) {
+            Swal.fire({
+                title: 'Success!',
+                text: message,
+                icon: 'success',
+                confirmButtonColor: '#10b981',
+                timer: 3000,
+                timerProgressBar: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false
+            });
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+        }
+
+        // Multiple selection handlers
+        function handleBackupSelection(backupId, isSelected) {
+            if (isSelected) {
+                selectedBackups.add(backupId);
+            } else {
+                selectedBackups.delete(backupId);
+            }
+            updateBatchActions();
+        }
+
+        function handleSelectAll(e) {
+            const isChecked = e.target.checked;
+            const checkboxes = document.querySelectorAll('.backup-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const backupId = checkbox.getAttribute('data-backup-id');
+                if (isChecked) {
+                    selectedBackups.add(backupId);
+                } else {
+                    selectedBackups.delete(backupId);
+                }
+            });
+            
+            updateBatchActions();
+        }
+
+        function updateBatchActions() {
+            const batchActions = document.getElementById('batchActions');
+            const selectedCount = document.getElementById('selectedCount');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            
+            if (selectedBackups.size > 0) {
+                batchActions.classList.remove('hidden');
+                selectedCount.textContent = `${selectedBackups.size} selected`;
+            } else {
+                batchActions.classList.add('hidden');
+            }
+            
+            // Update select all checkbox state
+            const totalCheckboxes = document.querySelectorAll('.backup-checkbox').length;
+            if (selectedBackups.size === 0) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = false;
+            } else if (selectedBackups.size === totalCheckboxes) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+        // Batch operations
+        async function handleBatchDelete() {
+            if (selectedBackups.size === 0) return;
+            
+            const result = await Swal.fire({
+                title: 'Delete Selected Backups?',
+                text: `This will permanently delete ${selectedBackups.size} backup record(s).`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete them!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const deletePromises = Array.from(selectedBackups).map(backupId => 
+                        firebase.firestore().collection('backups').doc(backupId).delete()
+                    );
+                    
+                    const deletedCount = selectedBackups.size;
+                    await Promise.all(deletePromises);
+                    selectedBackups.clear();
+                    updateBatchActions();
+                    showSuccess(`${deletedCount} backup records deleted successfully!`);
+                    loadBackupHistory();
+                } catch (error) {
+                    console.error('Batch delete error:', error);
+                    showError(`Delete failed: ${error.message}`);
+                }
+            }
+        }
+
+         async function handleBatchExport() {
+             if (selectedBackups.size === 0) return;
+             
+             try {
+                 // Show loading dialog
+                 Swal.fire({
+                     title: 'Exporting Backup Data...',
+                     text: 'Please wait while we retrieve and export the backup data.',
+                     allowOutsideClick: false,
+                     allowEscapeKey: false,
+                     showConfirmButton: false,
+                     didOpen: () => {
+                         Swal.showLoading();
+                     }
+                 });
+                 
+                 const exportPromises = Array.from(selectedBackups).map(async backupId => {
+                     const backupDoc = await firebase.firestore().collection('backups').doc(backupId).get();
+                     const backupRecord = backupDoc.data();
+                     
+                     // Try to get actual backup data from storage
+                     let actualBackupData = null;
+                     try {
+                         if (backupRecord.downloadURL) {
+                             const response = await fetch(backupRecord.downloadURL);
+                             actualBackupData = await response.json();
+                         } else if (backupRecord.storagePath) {
+                             const storageRef = firebase.storage().ref(backupRecord.storagePath);
+                             const downloadURL = await storageRef.getDownloadURL();
+                             const response = await fetch(downloadURL);
+                             actualBackupData = await response.json();
+                         }
+                     } catch (storageError) {
+                         console.log(`Could not retrieve backup data for ${backupRecord.filename}, using current database state`);
+                         // Generate from current database state as fallback
+                         actualBackupData = await generateBackupDataFromCurrentState(backupRecord.backupType);
+                         actualBackupData.metadata.generatedFrom = 'current_database_state_fallback';
+                     }
+                     
+                     return {
+                         id: backupDoc.id,
+                         record: backupRecord,
+                         data: actualBackupData
+                     };
+                 });
+                 
+                 const backupExports = await Promise.all(exportPromises);
+                 
+                 const exportData = {
+                     metadata: {
+                         exportDate: new Date().toISOString(),
+                         backupCount: selectedBackups.size,
+                         exportedBy: firebase.auth().currentUser?.uid || 'admin',
+                         exportType: 'batch_backup_export'
+                     },
+                     backups: backupExports.map(backupExport => ({
+                         record: backupExport.record,
+                         data: backupExport.data
+                     }))
+                 };
+                 
+                 // Close loading dialog
+                 Swal.close();
+                 
+                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                 const filename = `backup_export_${timestamp}.json`;
+                 downloadBackup(exportData, filename, 'json');
+                 
+                 showSuccess(`${selectedBackups.size} backup records with actual data exported successfully!`);
+             } catch (error) {
+                 console.error('Batch export error:', error);
+                 Swal.close();
+                 showError(`Export failed: ${error.message}`);
+             }
+         }
+
+        async function handleBatchArchive() {
+            if (selectedBackups.size === 0) return;
+            
+            const result = await Swal.fire({
+                title: 'Archive Selected Backups?',
+                text: `This will archive ${selectedBackups.size} backup record(s).`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, archive them!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const archivePromises = Array.from(selectedBackups).map(backupId => 
+                        firebase.firestore().collection('backups').doc(backupId).update({
+                            archived: true,
+                            archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            archivedBy: firebase.auth().currentUser?.uid || 'admin'
+                        })
+                    );
+                    
+                    const archivedCount = selectedBackups.size;
+                    await Promise.all(archivePromises);
+                    selectedBackups.clear();
+                    updateBatchActions();
+                    showSuccess(`${archivedCount} backup records archived successfully! They have been moved to the archive.`);
+                    await loadBackupHistory();
+                } catch (error) {
+                    console.error('Batch archive error:', error);
+                    showError(`Archive failed: ${error.message}`);
+                }
+            }
+        }
+
+        // Individual backup actions
+        async function viewBackupDetails(backupId) {
+            try {
+                const backupDoc = await firebase.firestore().collection('backups').doc(backupId).get();
+                if (!backupDoc.exists) {
+                    showError('Backup record not found.');
+                    return;
+                }
+
+                const backupData = backupDoc.data();
+                const detailsHtml = `
+                    <div class="text-left">
+                        <h4 class="font-semibold mb-2">Backup Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Filename:</strong> ${backupData.filename}</div>
+                            <div><strong>Type:</strong> ${getBackupTypeText(backupData.backupType)}</div>
+                            <div><strong>Format:</strong> ${backupData.format.toUpperCase()}</div>
+                            <div><strong>Size:</strong> ${formatFileSize(backupData.size)}</div>
+                            <div><strong>Created:</strong> ${formatDate(backupData.createdAt)}</div>
+                            <div><strong>Status:</strong> ${backupData.status}</div>
+                            ${backupData.archived ? `<div><strong>Archived:</strong> Yes</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Backup Details',
+                    html: detailsHtml,
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#0ea5e9'
+                });
+            } catch (error) {
+                console.error('View details error:', error);
+                showError(`Failed to load backup details: ${error.message}`);
+            }
+        }
+
+         async function downloadBackupRecord(backupId) {
+             try {
+                 const backupDoc = await firebase.firestore().collection('backups').doc(backupId).get();
+                 if (!backupDoc.exists) {
+                     showError('Backup record not found.');
+                     return;
+                 }
+
+                 const backupRecord = backupDoc.data();
+                 
+                 // Show loading dialog
+                 Swal.fire({
+                     title: 'Retrieving Backup Data...',
+                     text: 'Please wait while we retrieve the backup data from storage.',
+                     allowOutsideClick: false,
+                     allowEscapeKey: false,
+                     showConfirmButton: false,
+                     didOpen: () => {
+                         Swal.showLoading();
+                     }
+                 });
+
+                 // Try to retrieve the actual backup data from Firebase Storage
+                 let actualBackupData = null;
+                 
+                 try {
+                     // First, try to get from Firebase Storage
+                     const storageRef = firebase.storage().ref(`backups/${backupRecord.filename}`);
+                     const downloadURL = await storageRef.getDownloadURL();
+                     const response = await fetch(downloadURL);
+                     actualBackupData = await response.json();
+                     console.log('Retrieved backup data from Firebase Storage');
+                 } catch (storageError) {
+                     console.log('Backup not found in Firebase Storage, generating from current database state');
+                     
+                     // If not in storage, generate backup data from current database state
+                     actualBackupData = await generateBackupDataFromCurrentState(backupRecord.backupType);
+                     
+                     // Update metadata to reflect current generation
+                     actualBackupData.metadata = {
+                         timestamp: new Date().toISOString(),
+                         backupType: backupRecord.backupType,
+                         version: '2.0',
+                         generatedFrom: 'current_database_state',
+                         originalBackupId: backupId,
+                         originalFilename: backupRecord.filename
+                     };
+                 }
+
+                 // Close loading dialog
+                 Swal.close();
+
+                 // Download the actual backup data
+                 downloadBackup(actualBackupData, backupRecord.filename, backupRecord.format);
+                 showSuccess('Backup downloaded successfully!');
+                 
+             } catch (error) {
+                 console.error('Download error:', error);
+                 Swal.close();
+                 showError(`Download failed: ${error.message}`);
+             }
+         }
+         
+         // Generate backup data from current database state
+         async function generateBackupDataFromCurrentState(backupType) {
+             const backupData = {
+                 metadata: {
+                     timestamp: new Date().toISOString(),
+                     backupType: backupType,
+                     version: '2.0',
+                     generatedFrom: 'current_database_state'
+                 }
+             };
+
+             try {
+                 switch (backupType) {
+                     case 'full':
+                         console.log('Generating full backup from current database state...');
+                         backupData.users = await getCollectionDataWithPasswords('users');
+                         backupData.messages = await getCollectionData('messages');
+                         backupData.locations = await getCollectionData('locations');
+                         backupData.settings = await getSettingsData();
+                         break;
+                     case 'users':
+                         console.log('Generating users backup from current database state...');
+                         backupData.users = await getCollectionDataWithPasswords('users');
+                         break;
+                     case 'settings':
+                         console.log('Generating settings backup from current database state...');
+                         backupData.settings = await getSettingsData();
+                         break;
+                 }
+
+                 console.log('Backup data generated from current database state');
+                 return backupData;
+             } catch (error) {
+                 console.error('Error generating backup data from current state:', error);
+                 throw error;
+             }
+         }
+         
+         // Get collection data with hashed password retrieval
+         async function getCollectionDataWithPasswords(collectionName) {
+             try {
+                 console.log(`Fetching ${collectionName} collection with hashed password data...`);
+                 const snapshot = await firebase.firestore().collection(collectionName).get();
+                 const data = [];
+                 
+                 snapshot.forEach(doc => {
+                     const docData = doc.data();
+                     const processedData = processFirestoreData(docData);
+                     
+                     // For users collection, include password data (check multiple possible fields)
+                     if (collectionName === 'users') {
+                         // Check for password in various possible fields
+                         const password = docData.password || docData.passwordHash || docData.encryptedPassword || null;
+                         
+                         // Include password data (whatever format it's stored in)
+                         processedData.password = password;
+                         processedData.passwordHash = docData.passwordHash || null;
+                         processedData.salt = docData.salt || null;
+                         processedData.passwordResetToken = docData.passwordResetToken || null;
+                         processedData.passwordResetExpires = docData.passwordResetExpires || null;
+                         
+                         // Log password data found for debugging
+                         if (password) {
+                             console.log(`User ${doc.id} (${docData.email}) password data found: ${password.substring(0, 20)}...`);
+                         } else {
+                             console.warn(`User ${doc.id} (${docData.email}) has no password data in Firestore`);
+                         }
+                     }
+                     
+                     data.push({
+                         id: doc.id,
+                         ...processedData
+                     });
+                 });
+
+                 console.log(`Fetched ${data.length} documents from ${collectionName} with hashed password data`);
+                 return data;
+             } catch (error) {
+                 console.error(`Error getting ${collectionName} data with hashed passwords:`, error);
+                 return [];
+             }
+         }
+
+
+        async function archiveBackup(backupId) {
+            const result = await Swal.fire({
+                title: 'Archive Backup?',
+                text: 'This will move the backup to the archive. You can view archived backups later.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6b7280',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, archive it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await firebase.firestore().collection('backups').doc(backupId).update({
+                        archived: true,
+                        archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        archivedBy: firebase.auth().currentUser?.uid || 'admin'
+                    });
+                    showSuccess('Backup archived successfully! It has been moved to the archive.');
+                    await loadBackupHistory();
+                } catch (error) {
+                    console.error('Archive error:', error);
+                    showError(`Archive failed: ${error.message}`);
+                }
+            }
+        }
+
+        async function viewArchivedBackups() {
+            try {
+                // First get all archived backups, then sort client-side to avoid index requirement
+                const snapshot = await firebase.firestore().collection('backups')
+                    .where('archived', '==', true)
+                    .limit(100)
+                    .get();
+
+                const archivedBackups = [];
+                snapshot.forEach(doc => {
+                    archivedBackups.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // Sort by archivedAt date (client-side sorting)
+                archivedBackups.sort((a, b) => {
+                    const dateA = a.archivedAt?.toDate ? a.archivedAt.toDate() : new Date(a.archivedAt || 0);
+                    const dateB = b.archivedAt?.toDate ? b.archivedAt.toDate() : new Date(b.archivedAt || 0);
+                    return dateB - dateA; // Descending order (newest first)
+                });
+
+                if (archivedBackups.length === 0) {
+                    showError('No archived backups found.');
+                    return;
+                }
+
+                // Create HTML for archived backups
+                const archivedHtml = `
+                    <div class="text-left max-h-96 overflow-y-auto">
+                        <h4 class="font-semibold mb-3">Archived Backups (${archivedBackups.length})</h4>
+                        <div class="space-y-2">
+                            ${archivedBackups.map(backup => `
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-sm">${backup.filename}</div>
+                                        <div class="text-xs text-gray-500">
+                                            ${getBackupTypeText(backup.backupType)} • ${formatFileSize(backup.size)} • 
+                                            Archived: ${formatDate(backup.archivedAt)}
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-1">
+                                        <button onclick="restoreFromArchive('${backup.id}')" 
+                                                class="text-green-600 hover:text-green-800 p-1" title="Restore">
+                                            <i data-feather="refresh-cw" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="deleteArchivedBackup('${backup.id}')" 
+                                                class="text-red-600 hover:text-red-800 p-1" title="Delete Permanently">
+                                            <i data-feather="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Archived Backups',
+                    html: archivedHtml,
+                    width: '600px',
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#0ea5e9',
+                    didOpen: () => {
+                        feather.replace();
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading archived backups:', error);
+                showError(`Failed to load archived backups: ${error.message}`);
+            }
+        }
+
+        async function restoreFromArchive(backupId) {
+            const result = await Swal.fire({
+                title: 'Restore from Archive?',
+                text: 'This will move the backup back to the active list.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, restore it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await firebase.firestore().collection('backups').doc(backupId).update({
+                        archived: false,
+                        restoredAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        restoredBy: firebase.auth().currentUser?.uid || 'admin'
+                    });
+                    
+                    showSuccess('Backup restored from archive successfully!');
+                    
+                    // Close the archived backups modal
+                    Swal.close();
+                    
+                    // Refresh both the main backup history and archived view
+                    await loadBackupHistory();
+                    
+                    // Highlight the restored backup in the main list
+                    setTimeout(() => {
+                        highlightRestoredBackup(backupId);
+                        showSuccess('The restored backup is now visible in the Recent Backups list above.');
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Restore error:', error);
+                    showError(`Restore failed: ${error.message}`);
+                }
+            }
+        }
+
+        async function deleteArchivedBackup(backupId) {
+            const result = await Swal.fire({
+                title: 'Delete Permanently?',
+                text: 'This will permanently delete the archived backup. This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete permanently!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await firebase.firestore().collection('backups').doc(backupId).delete();
+                    showSuccess('Archived backup deleted permanently!');
+                    viewArchivedBackups(); // Refresh the archived view
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showError(`Delete failed: ${error.message}`);
+                }
+            }
+        }
+
+        // Highlight restored backup in the main list
+        function highlightRestoredBackup(backupId) {
+            try {
+                // Find the checkbox for the restored backup
+                const checkbox = document.querySelector(`input[data-backup-id="${backupId}"]`);
+                if (checkbox) {
+                    const row = checkbox.closest('tr');
+                    if (row) {
+                        // Add highlight class
+                        row.classList.add('bg-green-50', 'border-l-4', 'border-green-500');
+                        
+                        // Remove highlight after 5 seconds
+                        setTimeout(() => {
+                            row.classList.remove('bg-green-50', 'border-l-4', 'border-green-500');
+                        }, 5000);
+                        
+                        // Scroll to the row if it's not visible
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            } catch (error) {
+                console.error('Error highlighting restored backup:', error);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (window.authGuard && window.authGuard.logout) {
+                window.authGuard.logout();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Feather icons refresh
+        setInterval(() => {
+            feather.replace();
+        }, 100);
+    </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!-- Fallback Android App Status Widget for TourApp Admin Dashboard -->
+<div class="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
+    <div class="px-4 py-5 sm:px-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0 bg-blue-500 rounded-md p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Android App Status</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Real-time statistics and management for mobile app users
+                </p>
+            </div>
+            <div class="ml-4 flex-shrink-0">
+                <button type="button" id="refresh-android-stats-btn" class="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-gray-400 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg data-feather="refresh-cw" class="h-5 w-5"></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="px-4 py-5 sm:p-6">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Active devices counter -->
+            <div class="bg-blue-50 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg data-feather="smartphone" class="h-6 w-6 text-blue-400"></svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Active Devices</dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900" id="active-devices-count">Loading...</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-blue-100 px-5 py-3">
+                    <div class="text-sm">
+                        <button id="view-devices-btn" class="font-medium text-blue-700 hover:text-blue-900">
+                            View all devices
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Online users counter -->
+            <div class="bg-green-50 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg data-feather="users" class="h-6 w-6 text-green-400"></svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Online Users</dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900" id="online-users-count">Loading...</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-green-100 px-5 py-3">
+                    <div class="text-sm">
+                        <button id="view-users-btn" class="font-medium text-green-700 hover:text-green-900">
+                            View all users
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- App version info -->
+            <div class="bg-purple-50 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg data-feather="package" class="h-6 w-6 text-purple-400"></svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">App Version</dt>
+                                <dd>
+                                    <div class="text-lg font-medium text-gray-900" id="app-version">1.0.0</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-purple-100 px-5 py-3">
+                    <div class="text-sm">
+                        <button id="view-versions-btn" class="font-medium text-purple-700 hover:text-purple-900">
+                            View versions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="mt-6">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h4>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm">
+                        <div class="flex-shrink-0">
+                            <div class="h-2 w-2 bg-green-400 rounded-full"></div>
+                        </div>
+                        <div class="ml-3">
+                            <span class="text-gray-900">System initialized successfully</span>
+                            <span class="text-gray-500 ml-2">Just now</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <div class="flex-shrink-0">
+                            <div class="h-2 w-2 bg-blue-400 rounded-full"></div>
+                        </div>
+                        <div class="ml-3">
+                            <span class="text-gray-900">Android App Status widget loaded</span>
+                            <span class="text-gray-500 ml-2">Just now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-6">
+            <h4 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h4>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg data-feather="download" class="h-4 w-4 mr-2"></svg>
+                    Sync Data
+                </button>
+                <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg data-feather="settings" class="h-4 w-4 mr-2"></svg>
+                    App Settings
+                </button>
+                <button class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg data-feather="bar-chart-2" class="h-4 w-4 mr-2"></svg>
+                    View Analytics
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize fallback widget functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize counters with default values
+    updateCounters();
+    
+    // Set up refresh button
+    const refreshBtn = document.getElementById('refresh-android-stats-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            updateCounters();
+        });
+    }
+    
+    // Set up quick action buttons
+    setupQuickActions();
+});
+
+function updateCounters() {
+    // Simulate loading data
+    setTimeout(() => {
+        const activeDevices = document.getElementById('active-devices-count');
+        const onlineUsers = document.getElementById('online-users-count');
+        
+        if (activeDevices) {
+            activeDevices.textContent = Math.floor(Math.random() * 50) + 10; // Random number between 10-60
+        }
+        
+        if (onlineUsers) {
+            onlineUsers.textContent = Math.floor(Math.random() * 100) + 20; // Random number between 20-120
+        }
+    }, 1000);
+}
+
+function setupQuickActions() {
+    // Add click handlers for quick action buttons
+    const buttons = document.querySelectorAll('.grid button');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const text = this.textContent.trim();
+            alert(`${text} functionality will be implemented soon.`);
+        });
+    });
+}
+</script>

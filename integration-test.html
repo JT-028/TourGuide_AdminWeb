@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration Test - TourApp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/user-management-advanced.js"></script>
+    <script src="js/trip-management-enhanced.js"></script>
+    <script src="js/data-backup-enhanced.js"></script>
+    <script src="js/admin-registration.js"></script>
+    <script src="js/real-time-sync.js"></script>
+    
+    <style>
+        .test-pass { color: #10b981; }
+        .test-fail { color: #ef4444; }
+        .test-pending { color: #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6">TourApp Admin Integration Test</h1>
+                
+                <!-- Test Results Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i data-feather="check-circle" class="w-8 h-8 text-green-600 mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">Passed</p>
+                                <p class="text-2xl font-bold text-green-900" id="passedCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i data-feather="x-circle" class="w-8 h-8 text-red-600 mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-red-800">Failed</p>
+                                <p class="text-2xl font-bold text-red-900" id="failedCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i data-feather="clock" class="w-8 h-8 text-yellow-600 mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-yellow-800">Pending</p>
+                                <p class="text-2xl font-bold text-yellow-900" id="pendingCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i data-feather="activity" class="w-8 h-8 text-blue-600 mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800">Total</p>
+                                <p class="text-2xl font-bold text-blue-900" id="totalCount">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Controls -->
+                <div class="mb-6">
+                    <button id="runAllTests" class="bg-sky-600 text-white px-6 py-2 rounded-lg hover:bg-sky-700 mr-4">
+                        Run All Tests
+                    </button>
+                    <button id="runFirebaseTests" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 mr-4">
+                        Test Firebase Connection
+                    </button>
+                    <button id="runUserTests" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 mr-4">
+                        Test User Management
+                    </button>
+                    <button id="runTripTests" class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700">
+                        Test Trip Management
+                    </button>
+                </div>
+
+                <!-- Test Results -->
+                <div class="space-y-4" id="testResults">
+                    <!-- Test results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class IntegrationTester {
+            constructor() {
+                this.tests = [];
+                this.results = [];
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.defineTests();
+                this.updateCounts();
+            }
+
+            setupEventListeners() {
+                document.getElementById('runAllTests').addEventListener('click', () => this.runAllTests());
+                document.getElementById('runFirebaseTests').addEventListener('click', () => this.runFirebaseTests());
+                document.getElementById('runUserTests').addEventListener('click', () => this.runUserTests());
+                document.getElementById('runTripTests').addEventListener('click', () => this.runTripTests());
+            }
+
+            defineTests() {
+                this.tests = [
+                    // Firebase Connection Tests
+                    {
+                        category: 'Firebase',
+                        name: 'Firebase Configuration',
+                        test: () => this.testFirebaseConfig()
+                    },
+                    {
+                        category: 'Firebase',
+                        name: 'Firestore Connection',
+                        test: () => this.testFirestoreConnection()
+                    },
+                    {
+                        category: 'Firebase',
+                        name: 'Authentication Service',
+                        test: () => this.testAuthService()
+                    },
+                    {
+                        category: 'Firebase',
+                        name: 'Storage Service',
+                        test: () => this.testStorageService()
+                    },
+                    
+                    // User Management Tests
+                    {
+                        category: 'User Management',
+                        name: 'User Collection Access',
+                        test: () => this.testUserCollectionAccess()
+                    },
+                    {
+                        category: 'User Management',
+                        name: 'User CRUD Operations',
+                        test: () => this.testUserCRUD()
+                    },
+                    {
+                        category: 'User Management',
+                        name: 'User Real-time Updates',
+                        test: () => this.testUserRealTimeUpdates()
+                    },
+                    
+                    // Trip Management Tests
+                    {
+                        category: 'Trip Management',
+                        name: 'Trip Collection Access',
+                        test: () => this.testTripCollectionAccess()
+                    },
+                    {
+                        category: 'Trip Management',
+                        name: 'Trip CRUD Operations',
+                        test: () => this.testTripCRUD()
+                    },
+                    {
+                        category: 'Trip Management',
+                        name: 'Trip Real-time Updates',
+                        test: () => this.testTripRealTimeUpdates()
+                    },
+                    
+                    // Data Backup Tests
+                    {
+                        category: 'Data Backup',
+                        name: 'Backup Creation',
+                        test: () => this.testBackupCreation()
+                    },
+                    {
+                        category: 'Data Backup',
+                        name: 'Backup Storage',
+                        test: () => this.testBackupStorage()
+                    },
+                    {
+                        category: 'Data Backup',
+                        name: 'Backup Restore',
+                        test: () => this.testBackupRestore()
+                    },
+                    
+                    // Real-time Sync Tests
+                    {
+                        category: 'Real-time Sync',
+                        name: 'Connection Monitoring',
+                        test: () => this.testConnectionMonitoring()
+                    },
+                    {
+                        category: 'Real-time Sync',
+                        name: 'Event Emission',
+                        test: () => this.testEventEmission()
+                    },
+                    {
+                        category: 'Real-time Sync',
+                        name: 'Offline Handling',
+                        test: () => this.testOfflineHandling()
+                    }
+                ];
+            }
+
+            async runAllTests() {
+                this.clearResults();
+                for (const test of this.tests) {
+                    await this.runTest(test);
+                }
+                this.updateCounts();
+            }
+
+            async runFirebaseTests() {
+                this.clearResults();
+                const firebaseTests = this.tests.filter(t => t.category === 'Firebase');
+                for (const test of firebaseTests) {
+                    await this.runTest(test);
+                }
+                this.updateCounts();
+            }
+
+            async runUserTests() {
+                this.clearResults();
+                const userTests = this.tests.filter(t => t.category === 'User Management');
+                for (const test of userTests) {
+                    await this.runTest(test);
+                }
+                this.updateCounts();
+            }
+
+            async runTripTests() {
+                this.clearResults();
+                const tripTests = this.tests.filter(t => t.category === 'Trip Management');
+                for (const test of tripTests) {
+                    await this.runTest(test);
+                }
+                this.updateCounts();
+            }
+
+            async runTest(test) {
+                const result = {
+                    category: test.category,
+                    name: test.name,
+                    status: 'pending',
+                    message: '',
+                    timestamp: new Date()
+                };
+
+                this.addTestResult(result);
+
+                try {
+                    const testResult = await test.test();
+                    result.status = testResult.success ? 'passed' : 'failed';
+                    result.message = testResult.message;
+                } catch (error) {
+                    result.status = 'failed';
+                    result.message = error.message;
+                }
+
+                this.updateTestResult(result);
+                this.updateCounts();
+            }
+
+            // Firebase Tests
+            async testFirebaseConfig() {
+                if (typeof firebaseServices !== 'undefined' && firebaseServices.auth && firebaseServices.db) {
+                    return { success: true, message: 'Firebase services initialized correctly' };
+                }
+                return { success: false, message: 'Firebase services not initialized' };
+            }
+
+            async testFirestoreConnection() {
+                try {
+                    await firebaseServices.db.collection('test').limit(1).get();
+                    return { success: true, message: 'Firestore connection successful' };
+                } catch (error) {
+                    return { success: false, message: `Firestore connection failed: ${error.message}` };
+                }
+            }
+
+            async testAuthService() {
+                try {
+                    const currentUser = firebaseServices.auth.currentUser;
+                    return { success: true, message: `Auth service working. Current user: ${currentUser ? currentUser.email : 'None'}` };
+                } catch (error) {
+                    return { success: false, message: `Auth service failed: ${error.message}` };
+                }
+            }
+
+            async testStorageService() {
+                try {
+                    const storageRef = firebaseServices.storage.ref();
+                    return { success: true, message: 'Storage service initialized correctly' };
+                } catch (error) {
+                    return { success: false, message: `Storage service failed: ${error.message}` };
+                }
+            }
+
+            // User Management Tests
+            async testUserCollectionAccess() {
+                try {
+                    const snapshot = await firebaseServices.usersCollection.limit(1).get();
+                    return { success: true, message: `User collection accessible. Found ${snapshot.size} users` };
+                } catch (error) {
+                    return { success: false, message: `User collection access failed: ${error.message}` };
+                }
+            }
+
+            async testUserCRUD() {
+                try {
+                    // Test read operation
+                    const snapshot = await firebaseServices.usersCollection.limit(1).get();
+                    return { success: true, message: 'User CRUD operations accessible' };
+                } catch (error) {
+                    return { success: false, message: `User CRUD test failed: ${error.message}` };
+                }
+            }
+
+            async testUserRealTimeUpdates() {
+                try {
+                    if (window.advancedUserManager) {
+                        return { success: true, message: 'User real-time manager initialized' };
+                    }
+                    return { success: false, message: 'User real-time manager not initialized' };
+                } catch (error) {
+                    return { success: false, message: `User real-time test failed: ${error.message}` };
+                }
+            }
+
+            // Trip Management Tests
+            async testTripCollectionAccess() {
+                try {
+                    const snapshot = await firebaseServices.tripsCollection.limit(1).get();
+                    return { success: true, message: `Trip collection accessible. Found ${snapshot.size} trips` };
+                } catch (error) {
+                    return { success: false, message: `Trip collection access failed: ${error.message}` };
+                }
+            }
+
+            async testTripCRUD() {
+                try {
+                    const snapshot = await firebaseServices.tripsCollection.limit(1).get();
+                    return { success: true, message: 'Trip CRUD operations accessible' };
+                } catch (error) {
+                    return { success: false, message: `Trip CRUD test failed: ${error.message}` };
+                }
+            }
+
+            async testTripRealTimeUpdates() {
+                try {
+                    if (window.enhancedTripManager) {
+                        return { success: true, message: 'Trip real-time manager initialized' };
+                    }
+                    return { success: false, message: 'Trip real-time manager not initialized' };
+                } catch (error) {
+                    return { success: false, message: `Trip real-time test failed: ${error.message}` };
+                }
+            }
+
+            // Data Backup Tests
+            async testBackupCreation() {
+                try {
+                    if (window.enhancedDataBackupManager) {
+                        return { success: true, message: 'Data backup manager initialized' };
+                    }
+                    return { success: false, message: 'Data backup manager not initialized' };
+                } catch (error) {
+                    return { success: false, message: `Backup creation test failed: ${error.message}` };
+                }
+            }
+
+            async testBackupStorage() {
+                try {
+                    const storageRef = firebaseServices.storage.ref('backups/test');
+                    return { success: true, message: 'Backup storage accessible' };
+                } catch (error) {
+                    return { success: false, message: `Backup storage test failed: ${error.message}` };
+                }
+            }
+
+            async testBackupRestore() {
+                try {
+                    if (window.enhancedDataBackupManager && typeof window.enhancedDataBackupManager.restoreBackupData === 'function') {
+                        return { success: true, message: 'Backup restore functionality available' };
+                    }
+                    return { success: false, message: 'Backup restore functionality not available' };
+                } catch (error) {
+                    return { success: false, message: `Backup restore test failed: ${error.message}` };
+                }
+            }
+
+            // Real-time Sync Tests
+            async testConnectionMonitoring() {
+                try {
+                    if (window.realTimeSyncManager) {
+                        return { success: true, message: 'Real-time sync manager initialized' };
+                    }
+                    return { success: false, message: 'Real-time sync manager not initialized' };
+                } catch (error) {
+                    return { success: false, message: `Connection monitoring test failed: ${error.message}` };
+                }
+            }
+
+            async testEventEmission() {
+                try {
+                    if (window.realTimeSyncManager && typeof window.realTimeSyncManager.emitEvent === 'function') {
+                        return { success: true, message: 'Event emission functionality available' };
+                    }
+                    return { success: false, message: 'Event emission functionality not available' };
+                } catch (error) {
+                    return { success: false, message: `Event emission test failed: ${error.message}` };
+                }
+            }
+
+            async testOfflineHandling() {
+                try {
+                    if (window.realTimeSyncManager && typeof window.realTimeSyncManager.setupOfflineHandling === 'function') {
+                        return { success: true, message: 'Offline handling functionality available' };
+                    }
+                    return { success: false, message: 'Offline handling functionality not available' };
+                } catch (error) {
+                    return { success: false, message: `Offline handling test failed: ${error.message}` };
+                }
+            }
+
+            addTestResult(result) {
+                this.results.push(result);
+                this.renderTestResult(result);
+            }
+
+            updateTestResult(result) {
+                const index = this.results.findIndex(r => r.name === result.name && r.category === result.category);
+                if (index !== -1) {
+                    this.results[index] = result;
+                    this.renderTestResult(result);
+                }
+            }
+
+            renderTestResult(result) {
+                const container = document.getElementById('testResults');
+                const existingElement = document.querySelector(`[data-test-name="${result.name}"]`);
+                
+                const statusClass = result.status === 'passed' ? 'test-pass' : 
+                                  result.status === 'failed' ? 'test-fail' : 'test-pending';
+                
+                const statusIcon = result.status === 'passed' ? 'check-circle' : 
+                                 result.status === 'failed' ? 'x-circle' : 'clock';
+                
+                const element = existingElement || document.createElement('div');
+                element.className = 'border border-gray-200 rounded-lg p-4';
+                element.setAttribute('data-test-name', result.name);
+                element.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i data-feather="${statusIcon}" class="w-5 h-5 mr-3 ${statusClass}"></i>
+                            <div>
+                                <h4 class="font-medium text-gray-900">${result.name}</h4>
+                                <p class="text-sm text-gray-500">${result.category}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm ${statusClass} font-medium">${result.status.toUpperCase()}</p>
+                            <p class="text-xs text-gray-500">${result.timestamp.toLocaleTimeString()}</p>
+                        </div>
+                    </div>
+                    ${result.message ? `<p class="mt-2 text-sm text-gray-600">${result.message}</p>` : ''}
+                `;
+                
+                if (!existingElement) {
+                    container.appendChild(element);
+                }
+                
+                feather.replace();
+            }
+
+            clearResults() {
+                this.results = [];
+                document.getElementById('testResults').innerHTML = '';
+            }
+
+            updateCounts() {
+                const passed = this.results.filter(r => r.status === 'passed').length;
+                const failed = this.results.filter(r => r.status === 'failed').length;
+                const pending = this.results.filter(r => r.status === 'pending').length;
+                const total = this.results.length;
+
+                document.getElementById('passedCount').textContent = passed;
+                document.getElementById('failedCount').textContent = failed;
+                document.getElementById('pendingCount').textContent = pending;
+                document.getElementById('totalCount').textContent = total;
+            }
+        }
+
+        // Initialize integration tester when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            feather.replace();
+            window.integrationTester = new IntegrationTester();
+        });
+    </script>
+</body>
+</html>

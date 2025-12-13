@@ -1,0 +1,174 @@
+<!-- Notification Modal Component for TourApp Admin Dashboard -->
+<div id="notification-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                    <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        Send System Notification
+                    </h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            Send a notification to all active Android app users. This will appear in their notification area and in the app's notification center.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="notification-form" class="mt-5 sm:mt-6">
+                <div class="mb-4">
+                    <label for="notification-title" class="block text-sm font-medium text-gray-700">Title</label>
+                    <input type="text" name="title" id="notification-title" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Notification Title" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notification-message" class="block text-sm font-medium text-gray-700">Message</label>
+                    <textarea id="notification-message" name="message" rows="3" class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Enter notification message here..." required></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notification-priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                    <select id="notification-priority" name="priority" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="normal">Normal</option>
+                        <option value="high">High (Important)</option>
+                        <option value="urgent">Urgent (Critical)</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <fieldset>
+                        <legend class="text-sm font-medium text-gray-700">Target Users</legend>
+                        <div class="mt-2 space-y-2">
+                            <div class="flex items-center">
+                                <input id="all-users" name="user-target" type="radio" value="all" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" checked>
+                                <label for="all-users" class="ml-3 block text-sm font-medium text-gray-700">
+                                    All Users
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="students-only" name="user-target" type="radio" value="students" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                <label for="students-only" class="ml-3 block text-sm font-medium text-gray-700">
+                                    Students Only
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="faculty-only" name="user-target" type="radio" value="faculty" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                <label for="faculty-only" class="ml-3 block text-sm font-medium text-gray-700">
+                                    Faculty Only
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="admins-only" name="user-target" type="radio" value="admins" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                <label for="admins-only" class="ml-3 block text-sm font-medium text-gray-700">
+                                    Admins Only
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="mb-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="notification-action-required" name="actionRequired" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="notification-action-required" class="font-medium text-gray-700">Require Acknowledgment</label>
+                            <p class="text-gray-500">Users will need to acknowledge this notification within the app</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button type="button" id="notification-cancel-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Send Notification
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize the notification modal component
+    document.addEventListener('DOMContentLoaded', () => {
+        const notificationModal = document.getElementById('notification-modal');
+        const notificationForm = document.getElementById('notification-form');
+        const cancelButton = document.getElementById('notification-cancel-btn');
+        
+        // Close modal on cancel
+        cancelButton?.addEventListener('click', () => {
+            notificationModal.classList.add('hidden');
+        });
+        
+        // Handle form submission
+        notificationForm?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(notificationForm);
+            const notificationData = {
+                title: formData.get('title'),
+                message: formData.get('message'),
+                priority: formData.get('priority'),
+                targetUserRole: formData.get('user-target'),
+                requireAcknowledgment: formData.get('actionRequired') === 'on',
+                timestamp: new Date(),
+                sender: firebaseServices.auth.currentUser?.email || 'System Admin',
+                type: 'SYSTEM'
+            };
+            
+            try {
+                // Show loading state
+                const submitButton = notificationForm.querySelector('button[type="submit"]');
+                const originalText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Sending...';
+                
+                // Send notification through Cloud Function
+                if (typeof adminAndroidSync !== 'undefined') {
+                    await adminAndroidSync.sendSystemNotification(notificationData);
+                    
+                    // Log activity
+                    await firebaseServices.db.collection('system_events').add({
+                        type: 'system_notification',
+                        message: `Admin sent "${notificationData.title}" notification to ${notificationData.targetUserRole} users`,
+                        timestamp: new Date(),
+                        user: firebaseServices.auth.currentUser?.email || 'unknown'
+                    });
+                    
+                    // Show success message
+                    alert('Notification sent successfully');
+                    
+                    // Close modal
+                    notificationModal.classList.add('hidden');
+                    
+                    // Reset form
+                    notificationForm.reset();
+                } else {
+                    throw new Error('Admin-Android sync service not initialized');
+                }
+            } catch (error) {
+                console.error('Error sending notification:', error);
+                alert(`Failed to send notification: ${error.message}`);
+            } finally {
+                // Restore button state
+                const submitButton = notificationForm.querySelector('button[type="submit"]');
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        });
+    });
+</script>

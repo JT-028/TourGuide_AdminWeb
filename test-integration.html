@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourApp Admin - Integration Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">TourApp Admin Integration Test</h1>
+            <p class="text-gray-600">Testing Firebase connection and data loading</p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Firebase Connection Status -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Firebase Connection Status</h3>
+                <div id="firebase-status" class="text-sm text-gray-600">
+                    <i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>
+                    Checking connection...
+                </div>
+            </div>
+
+            <!-- Authentication Status -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Authentication Status</h3>
+                <div id="auth-status" class="text-sm text-gray-600">
+                    <i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>
+                    Checking authentication...
+                </div>
+            </div>
+
+            <!-- Database Collections -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Database Collections</h3>
+                <div id="collections-status" class="text-sm text-gray-600">
+                    <i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>
+                    Loading collections...
+                </div>
+            </div>
+
+            <!-- Test Actions -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Test Actions</h3>
+                <div class="space-y-2">
+                    <button id="test-users" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
+                        Test Users Collection
+                    </button>
+                    <button id="test-trips" class="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition">
+                        Test Trips Collection
+                    </button>
+                    <button id="test-login" class="w-full bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-600 transition">
+                        Test Login (Demo)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Test Results</h3>
+                <div id="test-results" class="text-sm text-gray-600">
+                    No tests run yet.
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="text-center">
+                <a href="login.html" class="inline-block bg-sky-600 text-white py-2 px-6 rounded-lg hover:bg-sky-700 transition">
+                    Go to Admin Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            try {
+                const statusEl = document.getElementById('firebase-status');
+                
+                if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                    statusEl.innerHTML = '<i data-feather="check-circle" class="w-4 h-4 inline mr-2 text-green-500"></i>Firebase connected successfully';
+                    statusEl.className = 'text-sm text-green-600';
+                } else {
+                    statusEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Firebase connection failed';
+                    statusEl.className = 'text-sm text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('firebase-status').innerHTML = 
+                    '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Firebase error: ' + error.message;
+            }
+            feather.replace();
+        }
+
+        // Test authentication
+        async function testAuthentication() {
+            try {
+                const statusEl = document.getElementById('auth-status');
+                
+                if (typeof firebaseServices !== 'undefined' && firebaseServices.auth) {
+                    const currentUser = firebaseServices.auth.currentUser;
+                    if (currentUser) {
+                        statusEl.innerHTML = '<i data-feather="check-circle" class="w-4 h-4 inline mr-2 text-green-500"></i>Authenticated as: ' + currentUser.email;
+                        statusEl.className = 'text-sm text-green-600';
+                    } else {
+                        statusEl.innerHTML = '<i data-feather="user" class="w-4 h-4 inline mr-2 text-yellow-500"></i>Not authenticated (this is normal)';
+                        statusEl.className = 'text-sm text-yellow-600';
+                    }
+                } else {
+                    statusEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Auth service not available';
+                    statusEl.className = 'text-sm text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = 
+                    '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Auth error: ' + error.message;
+            }
+            feather.replace();
+        }
+
+        // Test database collections
+        async function testCollections() {
+            try {
+                const statusEl = document.getElementById('collections-status');
+                
+                if (typeof firebaseServices !== 'undefined' && firebaseServices.db) {
+                    // Test users collection
+                    const usersSnapshot = await firebaseServices.usersCollection.limit(1).get();
+                    const tripsSnapshot = await firebaseServices.tripsCollection.limit(1).get();
+                    
+                    const userCount = usersSnapshot.size;
+                    const tripCount = tripsSnapshot.size;
+                    
+                    statusEl.innerHTML = `
+                        <i data-feather="check-circle" class="w-4 h-4 inline mr-2 text-green-500"></i>
+                        Collections accessible - Users: ${userCount > 0 ? 'Found' : 'Empty'}, Trips: ${tripCount > 0 ? 'Found' : 'Empty'}
+                    `;
+                    statusEl.className = 'text-sm text-green-600';
+                } else {
+                    statusEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Database service not available';
+                    statusEl.className = 'text-sm text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('collections-status').innerHTML = 
+                    '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Database error: ' + error.message;
+            }
+            feather.replace();
+        }
+
+        // Test users collection
+        async function testUsersCollection() {
+            const resultsEl = document.getElementById('test-results');
+            resultsEl.innerHTML = '<i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Testing users collection...';
+            feather.replace();
+
+            try {
+                const snapshot = await firebaseServices.usersCollection.limit(5).get();
+                const users = [];
+                snapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+
+                resultsEl.innerHTML = `
+                    <i data-feather="check-circle" class="w-4 h-4 inline mr-2 text-green-500"></i>
+                    Users collection test successful! Found ${users.length} users.
+                    ${users.length > 0 ? '<br>Sample user: ' + users[0].firstName + ' ' + users[0].lastName : ''}
+                `;
+                resultsEl.className = 'text-sm text-green-600';
+            } catch (error) {
+                resultsEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Users test failed: ' + error.message;
+                resultsEl.className = 'text-sm text-red-600';
+            }
+            feather.replace();
+        }
+
+        // Test trips collection
+        async function testTripsCollection() {
+            const resultsEl = document.getElementById('test-results');
+            resultsEl.innerHTML = '<i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Testing trips collection...';
+            feather.replace();
+
+            try {
+                const snapshot = await firebaseServices.tripsCollection.limit(5).get();
+                const trips = [];
+                snapshot.forEach(doc => {
+                    trips.push({ id: doc.id, ...doc.data() });
+                });
+
+                resultsEl.innerHTML = `
+                    <i data-feather="check-circle" class="w-4 h-4 inline mr-2 text-green-500"></i>
+                    Trips collection test successful! Found ${trips.length} trips.
+                    ${trips.length > 0 ? '<br>Sample trip: ' + trips[0].title : ''}
+                `;
+                resultsEl.className = 'text-sm text-green-600';
+            } catch (error) {
+                resultsEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Trips test failed: ' + error.message;
+                resultsEl.className = 'text-sm text-red-600';
+            }
+            feather.replace();
+        }
+
+        // Test login (demo)
+        async function testLogin() {
+            const resultsEl = document.getElementById('test-results');
+            resultsEl.innerHTML = '<i data-feather="loader" class="w-4 h-4 inline mr-2 animate-spin"></i>Testing login functionality...';
+            feather.replace();
+
+            try {
+                // This is just a demo - don't actually try to login
+                resultsEl.innerHTML = `
+                    <i data-feather="info" class="w-4 h-4 inline mr-2 text-blue-500"></i>
+                    Login test skipped (demo mode). To test login, use the actual login page with valid admin credentials.
+                `;
+                resultsEl.className = 'text-sm text-blue-600';
+            } catch (error) {
+                resultsEl.innerHTML = '<i data-feather="x-circle" class="w-4 h-4 inline mr-2 text-red-500"></i>Login test failed: ' + error.message;
+                resultsEl.className = 'text-sm text-red-600';
+            }
+            feather.replace();
+        }
+
+        // Initialize tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testFirebaseConnection();
+                testAuthentication();
+                testCollections();
+            }, 1000);
+
+            // Add event listeners for test buttons
+            document.getElementById('test-users').addEventListener('click', testUsersCollection);
+            document.getElementById('test-trips').addEventListener('click', testTripsCollection);
+            document.getElementById('test-login').addEventListener('click', testLogin);
+        });
+    </script>
+</body>
+</html>

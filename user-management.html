@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - TourApp Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- DataTables Bootstrap 5 CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    
+    <!-- TourApp Admin Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/user-management.js"></script>
+    <style>
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                height: 100vh;
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .flex-1 {
+                transition: margin-left 0.3s ease-in-out;
+                margin-left: 0;
+            }
+            .sidebar.open + .flex-1 {
+                margin-left: 16rem;
+            }
+        }
+        .active-nav-item {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 1rem;
+        }
+        
+        /* Custom table styling */
+        #userManagementTable {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        #userManagementTable thead th {
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        
+        #userManagementTable tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        #userManagementTable tbody tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        #userManagementTable tbody td {
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        
+        /* Checkbox styling */
+        .user-checkbox {
+            transform: scale(1.1);
+        }
+        
+        /* Action buttons styling */
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive table */
+        @media (max-width: 768px) {
+            #userManagementTable {
+                font-size: 0.875rem;
+            }
+            
+            #userManagementTable thead th,
+            #userManagementTable tbody td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+            <div class="p-4 border-b">
+                <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                    <i data-feather="compass" class="mr-2"></i>
+                    TourApp Admin
+                </h1>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+                    <a href="index.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="home" class="w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="user-management.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                        <i data-feather="user-check" class="w-5 h-5"></i>
+                        <span class="ml-3">User Management</span>
+                    </a>
+</div>
+                <div class="p-4 border-t">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                    <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="ml-3">Register Users</span>
+                    </a>
+                    <a href="data-backup.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="database" class="w-5 h-5"></i>
+                        <span class="ml-3">Data Backup</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="settings" class="w-5 h-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full" src="https://static.photos/people/200x200/1" alt="Admin">
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900">Admin User</p>
+                        <p class="text-xs text-gray-500">admin@cca.edu.ph</p>
+                    </div>
+                    <button onclick="window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="px-4 py-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                            <i data-feather="menu" class="w-6 h-6"></i>
+                        </button>
+                        <h2 class="ml-2 text-lg font-medium text-gray-900">User Management</h2>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-gray-500 hover:text-gray-700">
+                            <i data-feather="bell" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- User Management Content -->
+            <main class="p-6">
+                <!-- Page Header -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">Advanced User Management</h1>
+                    <p class="text-gray-600">Comprehensive user management with advanced filtering and bulk operations</p>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                                <i data-feather="users" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Users</p>
+                                <p class="text-2xl font-bold text-gray-900" id="total-users">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-feather="user-check" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Active Users</p>
+                                <p class="text-2xl font-bold text-gray-900" id="active-users">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i data-feather="user-x" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Pending Approval</p>
+                                <p class="text-2xl font-bold text-gray-900" id="pending-users">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-red-100 text-red-600">
+                                <i data-feather="user-minus" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Suspended</p>
+                                <p class="text-2xl font-bold text-gray-900" id="suspended-users">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters and Actions -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500" id="filterRole">
+                                <option value="">All User Types</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="student">Student</option>
+                                <option value="admin">Admin</option>
+                                <option value="parent">Parent</option>
+                            </select>
+                            <select class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500" id="filterStatus">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                            <input type="text" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500" id="searchInput" placeholder="Search users...">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="bg-sky-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-sky-700 transition flex items-center" id="exportBtn">
+                                <i data-feather="download" class="w-4 h-4 mr-2"></i>
+                                Export Users
+                            </button>
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition flex items-center" onclick="showBulkImportModal()">
+                                <i data-feather="upload" class="w-4 h-4 mr-2"></i>
+                                Bulk Import
+                            </button>
+                            <button class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700 transition flex items-center" id="bulkActionsBtn">
+                                <i data-feather="users" class="w-4 h-4 mr-2"></i>
+                                Bulk Actions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management Table -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="userManagementTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="w-12 px-4 py-4 text-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-sky-600 focus:ring-sky-500" id="selectAll">
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">
+                                        User Profile
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                                        Contact Info
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                                        Role & Department
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        Status
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        Last Activity
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="usersTableBody">
+                                <!-- Data will be loaded here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        });
+
+        // Initialize feather icons
+        feather.replace();
+        
+        // Verify SweetAlert2 is loaded
+        if (typeof Swal !== 'undefined') {
+            console.log('SweetAlert2 is loaded and ready');
+        } else {
+            console.error('SweetAlert2 not loaded');
+        }
+        
+        // Refresh Feather icons periodically for dynamic content
+        setInterval(() => {
+            feather.replace();
+        }, 1000);
+    </script>
+</body>
+</html>

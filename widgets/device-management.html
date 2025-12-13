@@ -1,0 +1,401 @@
+<!-- Active Devices Management Component for TourApp Admin Dashboard -->
+<div id="devices-management-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        Active Devices Management
+                    </h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            View and manage all Android devices currently connected to the TourApp system.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-5 sm:mt-6">
+                <!-- Search and filter controls -->
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <div class="flex-grow">
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <input type="text" id="device-search" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md" placeholder="Search devices...">
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <select id="device-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="all">All Devices</option>
+                            <option value="online">Online Only</option>
+                            <option value="offline">Offline Only</option>
+                            <option value="student">Student Devices</option>
+                            <option value="faculty">Faculty Devices</option>
+                            <option value="admin">Admin Devices</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Devices table -->
+                <div class="flex flex-col">
+                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                User / Device
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                Last Active
+                                            </th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                App Version
+                                            </th>
+                                            <th scope="col" class="relative px-6 py-3">
+                                                <span class="sr-only">Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="devices-table-body" class="bg-white divide-y divide-gray-200">
+                                        <!-- Device rows will be added here dynamically -->
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                Loading device data...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagination controls -->
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4">
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700" id="devices-count-info">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">10</span> of <span class="font-medium">20</span> devices
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <button id="prev-page-btn" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <button id="next-page-btn" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-5 sm:mt-6 flex justify-end">
+                    <button type="button" id="refresh-devices-btn" class="mr-2 inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
+                    <button type="button" id="close-devices-modal-btn" class="inline-flex justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const devicesModal = document.getElementById('devices-management-modal');
+        const closeButton = document.getElementById('close-devices-modal-btn');
+        const refreshButton = document.getElementById('refresh-devices-btn');
+        const searchInput = document.getElementById('device-search');
+        const filterSelect = document.getElementById('device-filter');
+        const tableBody = document.getElementById('devices-table-body');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        
+        let devices = [];
+        let filteredDevices = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        
+        // Close modal on close button click
+        closeButton?.addEventListener('click', () => {
+            devicesModal.classList.add('hidden');
+        });
+        
+        // Refresh devices list
+        refreshButton?.addEventListener('click', () => {
+            loadDevices();
+        });
+        
+        // Handle search input
+        searchInput?.addEventListener('input', () => {
+            applyFilters();
+        });
+        
+        // Handle filter select
+        filterSelect?.addEventListener('change', () => {
+            applyFilters();
+        });
+        
+        // Pagination handlers
+        prevPageBtn?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDeviceTable();
+            }
+        });
+        
+        nextPageBtn?.addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredDevices.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDeviceTable();
+            }
+        });
+        
+        // Load devices data
+        function loadDevices() {
+            if (typeof adminAndroidSync === 'undefined') {
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-sm text-center text-red-500">Device management service not available</td></tr>`;
+                return;
+            }
+            
+            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-sm text-center text-gray-500">Loading device data...</td></tr>`;
+            
+            // Get devices from Firestore
+            firebaseServices.db.collection('devices')
+                .orderBy('lastActive', 'desc')
+                .get()
+                .then(snapshot => {
+                    devices = [];
+                    snapshot.forEach(doc => {
+                        devices.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    applyFilters();
+                })
+                .catch(error => {
+                    console.error('Error loading devices:', error);
+                    tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-sm text-center text-red-500">Error loading devices: ${error.message}</td></tr>`;
+                });
+        }
+        
+        // Apply search and filters
+        function applyFilters() {
+            const searchTerm = searchInput?.value.toLowerCase() || '';
+            const filterType = filterSelect?.value || 'all';
+            
+            filteredDevices = devices.filter(device => {
+                // Apply search term
+                const matchesSearch = 
+                    (device.userEmail || '').toLowerCase().includes(searchTerm) ||
+                    (device.userName || '').toLowerCase().includes(searchTerm) ||
+                    (device.deviceModel || '').toLowerCase().includes(searchTerm) ||
+                    (device.id || '').toLowerCase().includes(searchTerm);
+                
+                // Apply filter type
+                let matchesFilter = true;
+                
+                switch(filterType) {
+                    case 'online':
+                        matchesFilter = device.isOnline === true;
+                        break;
+                    case 'offline':
+                        matchesFilter = device.isOnline !== true;
+                        break;
+                    case 'student':
+                        matchesFilter = (device.userRole || '').toLowerCase() === 'student';
+                        break;
+                    case 'faculty':
+                        matchesFilter = (device.userRole || '').toLowerCase() === 'faculty';
+                        break;
+                    case 'admin':
+                        matchesFilter = (device.userRole || '').toLowerCase() === 'admin';
+                        break;
+                }
+                
+                return matchesSearch && matchesFilter;
+            });
+            
+            // Reset to first page
+            currentPage = 1;
+            
+            // Render table
+            renderDeviceTable();
+        }
+        
+        // Render devices table
+        function renderDeviceTable() {
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredDevices.length);
+            const pageDevices = filteredDevices.slice(startIndex, endIndex);
+            
+            // Update pagination info
+            document.getElementById('devices-count-info').innerHTML = 
+                `Showing <span class="font-medium">${startIndex + 1}</span> to <span class="font-medium">${endIndex}</span> of <span class="font-medium">${filteredDevices.length}</span> devices`;
+            
+            // Disable/enable pagination buttons
+            prevPageBtn.disabled = currentPage === 1;
+            prevPageBtn.classList.toggle('opacity-50', currentPage === 1);
+            
+            const totalPages = Math.ceil(filteredDevices.length / itemsPerPage);
+            nextPageBtn.disabled = currentPage >= totalPages;
+            nextPageBtn.classList.toggle('opacity-50', currentPage >= totalPages);
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            // No results
+            if (pageDevices.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-sm text-center text-gray-500">No devices found matching your criteria</td></tr>`;
+                return;
+            }
+            
+            // Add device rows
+            pageDevices.forEach(device => {
+                const row = document.createElement('tr');
+                
+                // Format timestamp
+                const lastActive = device.lastActive?.toDate ? device.lastActive.toDate() : new Date(device.lastActive);
+                const lastActiveFormatted = lastActive ? lastActive.toLocaleString() : 'Unknown';
+                
+                // Status badge
+                let statusBadge;
+                if (device.isOnline) {
+                    statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Online</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Offline</span>`;
+                }
+                
+                // Role badge
+                let roleBadge = '';
+                switch ((device.userRole || '').toLowerCase()) {
+                    case 'student':
+                        roleBadge = `<span class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Student</span>`;
+                        break;
+                    case 'faculty':
+                        roleBadge = `<span class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Faculty</span>`;
+                        break;
+                    case 'admin':
+                        roleBadge = `<span class="ml-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Admin</span>`;
+                        break;
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full" src="${device.userPhotoUrl || 'https://via.placeholder.com/40?text=U'}" alt="">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${device.userName || 'Unknown User'}</div>
+                                <div class="text-sm text-gray-500">${device.userEmail || 'No email'}</div>
+                                <div class="text-xs text-gray-400">${device.deviceModel || 'Unknown Device'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            ${statusBadge}
+                            ${roleBadge}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${lastActiveFormatted}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${device.appVersion || 'Unknown'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900" data-device-id="${device.id}" data-action="message">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                </svg>
+                            </button>
+                            <button class="text-blue-600 hover:text-blue-900" data-device-id="${device.id}" data-action="force-sync">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Set up action buttons
+            const messageButtons = tableBody.querySelectorAll('button[data-action="message"]');
+            messageButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const deviceId = button.getAttribute('data-device-id');
+                    if (typeof adminAndroidSync !== 'undefined') {
+                        adminAndroidSync.showSendNotificationModal(deviceId);
+                    }
+                });
+            });
+            
+            const syncButtons = tableBody.querySelectorAll('button[data-action="force-sync"]');
+            syncButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const deviceId = button.getAttribute('data-device-id');
+                    if (typeof adminAndroidSync !== 'undefined') {
+                        adminAndroidSync.forceSyncDevice(deviceId)
+                            .then(() => {
+                                alert('Sync request sent to device');
+                            })
+                            .catch(error => {
+                                alert(`Error: ${error.message}`);
+                            });
+                    }
+                });
+            });
+        }
+        
+        // Open devices modal
+        window.openDevicesModal = function() {
+            devicesModal.classList.remove('hidden');
+            loadDevices();
+        };
+        
+        // Initialize view-devices button from widget
+        document.getElementById('view-devices-btn')?.addEventListener('click', () => {
+            openDevicesModal();
+        });
+    });
+</script>
