@@ -23,31 +23,8 @@
     <script src="js/trip-management-enhanced.js"></script>
     <script src="js/real-time-sync.js"></script>
     
-    <style>
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        @media (max-width: 1023px) {
-            .sidebar {
-                position: fixed;
-                height: 100vh;
-                z-index: 50;
-            }
-            .flex-1 {
-                transition: transform 0.3s ease-in-out;
-            }
-            .sidebar.-translate-x-full + .flex-1 {
-                transform: translateX(0);
-            }
-            .sidebar:not(.-translate-x-full) + .flex-1 {
-                transform: translateX(16rem);
-            }
-        }
-        .active-nav-item {
-            background-color: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
-        }
-    </style>
+    <link rel="stylesheet" href="css/trips-enhanced.css">
+    <link rel="stylesheet" href="css/form-fixes.css">
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">

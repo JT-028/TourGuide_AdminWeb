@@ -1,0 +1,41 @@
+/* Data Backup Page Styles */
+
+/* Sidebar transitions */
+.sidebar {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 1023px) {
+    .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 50;
+    }
+    .flex-1 {
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.-translate-x-full + .flex-1 {
+        transform: translateX(0);
+    }
+    .sidebar:not(.-translate-x-full) + .flex-1 {
+        transform: translateX(16rem);
+    }
+}
+
+/* Active navigation item */
+.active-nav-item {
+    background-color: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+}
+
+/* Backup card hover effects */
+.backup-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Progress bar animation */
+.progress-bar {
+    transition: width 0.3s ease-in-out;
+}

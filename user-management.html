@@ -9,14 +9,16 @@
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- jQuery and DataTables -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <!-- DataTables Bootstrap 5 CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -30,90 +32,286 @@
     <script src="js/auth-guard.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/user-management.js"></script>
-    <style>
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        @media (max-width: 1023px) {
-            .sidebar {
-                position: fixed;
-                height: 100vh;
-                z-index: 50;
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .flex-1 {
-                transition: margin-left 0.3s ease-in-out;
-                margin-left: 0;
-            }
-            .sidebar.open + .flex-1 {
-                margin-left: 16rem;
-            }
-        }
-        .active-nav-item {
-            background-color: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
-        }
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            padding: 1rem;
-        }
-        
-        /* Custom table styling */
-        #userManagementTable {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        
-        #userManagementTable thead th {
-            border-bottom: 2px solid #e5e7eb;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-        
-        #userManagementTable tbody tr {
-            transition: background-color 0.2s ease;
-        }
-        
-        #userManagementTable tbody tr:hover {
-            background-color: #f9fafb;
-        }
-        
-        #userManagementTable tbody td {
-            border-bottom: 1px solid #f3f4f6;
-            vertical-align: middle;
-        }
-        
-        /* Checkbox styling */
-        .user-checkbox {
-            transform: scale(1.1);
-        }
-        
-        /* Action buttons styling */
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        /* Responsive table */
-        @media (max-width: 768px) {
-            #userManagementTable {
-                font-size: 0.875rem;
+    
+    <!-- Mobile Navigation and Search/Notification System -->
+    <script>
+        // Mobile Navigation
+        class MobileNavigation {
+            constructor() {
+                this.sidebar = document.querySelector('.sidebar');
+                this.sidebarToggle = document.getElementById('sidebarToggle');
+                this.closeSidebar = document.getElementById('closeSidebar');
+                this.mobileOverlay = document.getElementById('mobileOverlay');
+                
+                this.init();
             }
             
-            #userManagementTable thead th,
-            #userManagementTable tbody td {
-                padding: 0.5rem;
+            init() {
+                this.setupEventListeners();
+                this.handleResize();
+            }
+            
+            setupEventListeners() {
+                this.sidebarToggle?.addEventListener('click', () => this.openSidebar());
+                this.closeSidebar?.addEventListener('click', () => this.closeSidebarMenu());
+                this.mobileOverlay?.addEventListener('click', () => this.closeSidebarMenu());
+                
+                window.addEventListener('resize', () => this.handleResize());
+                
+                // Close sidebar when clicking on nav links (mobile)
+                document.querySelectorAll('.sidebar a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (window.innerWidth < 1024) {
+                            this.closeSidebarMenu();
+                        }
+                    });
+                });
+            }
+            
+            openSidebar() {
+                this.sidebar?.classList.add('open');
+                this.mobileOverlay?.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeSidebarMenu() {
+                this.sidebar?.classList.remove('open');
+                this.mobileOverlay?.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            handleResize() {
+                if (window.innerWidth >= 1024) {
+                    this.closeSidebarMenu();
+                }
             }
         }
-    </style>
+        
+        // Global Search System (simplified for user management page)
+        class GlobalSearch {
+            constructor() {
+                this.searchInput = document.getElementById('globalSearch');
+                this.searchDropdown = document.getElementById('searchDropdown');
+                this.searchTimeout = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
+                this.searchInput?.addEventListener('focus', () => this.showDropdown());
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.searchInput?.contains(e.target) && !this.searchDropdown?.contains(e.target)) {
+                        this.hideDropdown();
+                    }
+                });
+                
+                // Handle escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideDropdown();
+                    }
+                });
+            }
+            
+            handleSearch(query) {
+                clearTimeout(this.searchTimeout);
+                
+                if (!query.trim()) {
+                    this.hideDropdown();
+                    return;
+                }
+                
+                this.searchTimeout = setTimeout(() => {
+                    this.performSearch(query.trim().toLowerCase());
+                }, 300);
+            }
+            
+            performSearch(query) {
+                if (!query) {
+                    this.hideDropdown();
+                    return;
+                }
+                
+                // Use the existing DataTable search functionality
+                if (window.usersDataTable) {
+                    window.usersDataTable.search(query).draw();
+                }
+                
+                this.renderSearchResults(query);
+                this.showDropdown();
+            }
+            
+            renderSearchResults(query) {
+                this.searchDropdown.innerHTML = `
+                    <div class="p-3 text-sm text-gray-600">
+                        <i data-feather="search" class="w-4 h-4 inline mr-2"></i>
+                        Searching for "${query}" in users...
+                    </div>
+                `;
+                feather.replace();
+            }
+            
+            showDropdown() {
+                this.searchDropdown?.classList.add('show');
+            }
+            
+            hideDropdown() {
+                this.searchDropdown?.classList.remove('show');
+            }
+        }
+        
+        // Notification System (simplified version)
+        class NotificationSystem {
+            constructor() {
+                this.notificationBell = document.getElementById('notificationBell');
+                this.notificationDropdown = document.getElementById('notificationDropdown');
+                this.notificationBadge = document.getElementById('notificationBadge');
+                this.notifications = [];
+                this.unreadCount = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadNotifications();
+            }
+            
+            setupEventListeners() {
+                this.notificationBell?.addEventListener('click', () => this.toggleDropdown());
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.notificationBell?.contains(e.target) && !this.notificationDropdown?.contains(e.target)) {
+                        this.hideDropdown();
+                    }
+                });
+            }
+            
+            async loadNotifications() {
+                try {
+                    // Load recent system events as notifications
+                    const snapshot = await firebaseServices.db.collection('system_events')
+                        .orderBy('timestamp', 'desc')
+                        .limit(10)
+                        .get();
+                    
+                    this.notifications = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        type: 'info'
+                    }));
+                    
+                    this.updateUnreadCount();
+                    this.renderNotifications();
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+            
+            updateUnreadCount() {
+                this.unreadCount = this.notifications.filter(n => !n.read).length;
+                this.updateBadge();
+            }
+            
+            updateBadge() {
+                if (this.unreadCount > 0) {
+                    this.notificationBadge.textContent = this.unreadCount > 9 ? '9+' : this.unreadCount;
+                    this.notificationBadge.classList.remove('hidden');
+                } else {
+                    this.notificationBadge.classList.add('hidden');
+                }
+            }
+            
+            renderNotifications() {
+                if (this.notifications.length === 0) {
+                    this.notificationDropdown.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2"></i>
+                            <p>No notifications</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.notificationDropdown.innerHTML = this.notifications.map(notification => `
+                    <div class="notification-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+                         onclick="notificationSystem.markAsRead('${notification.id}')">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i data-feather="info" class="w-4 h-4 text-blue-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">System Update</p>
+                                <p class="text-xs text-gray-600">${notification.message || 'System event occurred'}</p>
+                                <p class="text-xs text-gray-400">${this.formatTimestamp(notification.timestamp)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                feather.replace();
+            }
+            
+            formatTimestamp(timestamp) {
+                if (!timestamp) return 'Just now';
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+                return date.toLocaleDateString();
+            }
+            
+            markAsRead(notificationId) {
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.read = true;
+                    this.updateUnreadCount();
+                    this.renderNotifications();
+                }
+            }
+            
+            toggleDropdown() {
+                if (this.notificationDropdown?.classList.contains('show')) {
+                    this.hideDropdown();
+                } else {
+                    this.showDropdown();
+                }
+            }
+            
+            showDropdown() {
+                this.notificationDropdown?.classList.add('show');
+            }
+            
+            hideDropdown() {
+                this.notificationDropdown?.classList.remove('show');
+            }
+        }
+        
+        // Initialize systems when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize mobile navigation
+            window.mobileNav = new MobileNavigation();
+            
+            // Initialize global search
+            window.globalSearch = new GlobalSearch();
+            
+            // Initialize notification system
+            window.notificationSystem = new NotificationSystem();
+        });
+    </script>
+    <link rel="stylesheet" href="css/user-management.css">
+    <link rel="stylesheet" href="css/form-fixes.css">
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
@@ -168,26 +366,97 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 overflow-auto">
+        <div class="flex-1 overflow-auto main-content">
+            <!-- Mobile Overlay -->
+            <div id="mobileOverlay" class="mobile-overlay"></div>
+            
+            <!-- Sidebar -->
+            <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                        <i data-feather="compass" class="mr-2"></i>
+                        TourApp Admin
+                    </h1>
+                    <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                        <i data-feather="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <nav class="flex-1 overflow-y-auto">
+                    <div class="p-4">
+                        <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+                        <a href="dashboard.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i data-feather="home" class="w-5 h-5"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="user-management.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                            <i data-feather="user-check" class="w-5 h-5"></i>
+                            <span class="ml-3">User Management</span>
+                        </a>
+    </div>
+                    <div class="p-4 border-t">
+                        <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                        <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i data-feather="user-plus" class="w-5 h-5"></i>
+                            <span class="ml-3">Register Users</span>
+                        </a>
+                        <a href="data-backup.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i data-feather="database" class="w-5 h-5"></i>
+                            <span class="ml-3">Data Backup</span>
+                        </a>
+                        <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <i data-feather="settings" class="w-5 h-5"></i>
+                            <span class="ml-3">Settings</span>
+                        </a>
+                    </div>
+                </nav>
+                <div class="p-4 border-t">
+                    <div class="flex items-center">
+                        <img class="w-10 h-10 rounded-full object-cover" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K" alt="Admin" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K'">
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900 admin-name">Admin</p>
+                            <p class="text-xs text-gray-500 admin-email"></p>
+                        </div>
+                        <button onclick="window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                            <i data-feather="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Top Navigation -->
-            <header class="bg-white shadow-sm">
+            <header class="bg-white shadow-sm sticky top-0 z-40">
                 <div class="px-4 py-3 flex justify-between items-center">
                     <div class="flex items-center">
-                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                        <button class="text-gray-500 focus:outline-none lg:hidden touch-target" id="sidebarToggle">
                             <i data-feather="menu" class="w-6 h-6"></i>
                         </button>
                         <h2 class="ml-2 text-lg font-medium text-gray-900">User Management</h2>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <button class="text-gray-500 hover:text-gray-700">
-                            <i data-feather="bell" class="w-5 h-5"></i>
-                        </button>
+                    <div class="flex items-center space-x-4 header-actions">
+                        <!-- Search Container -->
+                        <div class="relative search-container">
+                            <input type="text" id="globalSearch" placeholder="Search..." 
+                                   class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 w-full">
+                            <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                            <!-- Search Dropdown -->
+                            <div id="searchDropdown" class="search-dropdown"></div>
+                        </div>
+                        
+                        <!-- Notification Bell -->
+                        <div class="relative">
+                            <button id="notificationBell" class="text-gray-500 hover:text-gray-700 notification-btn touch-target relative">
+                                <i data-feather="bell" class="w-5 h-5"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
+                            </button>
+                            <!-- Notification Dropdown -->
+                            <div id="notificationDropdown" class="notification-dropdown"></div>
+                        </div>
                     </div>
                 </div>
             </header>
 
             <!-- User Management Content -->
-            <main class="p-6">
+            <main class="p-6 mobile-padding">
                 <!-- Page Header -->
                 <div class="mb-6">
                     <h1 class="text-2xl font-bold text-gray-900">Advanced User Management</h1>
@@ -316,6 +585,11 @@
                 </div>
             </main>
         </div>
+        
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn" class="mobile-menu-btn touch-target">
+            <i data-feather="menu" class="w-6 h-6"></i>
+        </button>
     </div>
 
     <script>

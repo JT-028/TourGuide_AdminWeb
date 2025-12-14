@@ -1,0 +1,258 @@
+/* Dashboard and Mobile Navigation Styles */
+
+/* Mobile-first responsive styles */
+.sidebar {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile navigation */
+@media (max-width: 1023px) {
+    .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 50;
+        transform: translateX(-100%);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        display: none;
+    }
+    .mobile-overlay.active {
+        display: block;
+    }
+    .main-content {
+        transition: margin-left 0.3s ease-in-out;
+    }
+}
+
+/* Dashboard cards responsive */
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Search and notification responsive */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+    .header-actions {
+        gap: 0.25rem;
+    }
+    .search-container {
+        width: 150px;
+    }
+    .notification-btn {
+        padding: 0.25rem;
+    }
+}
+
+/* Active navigation item */
+.active-nav-item {
+    background-color: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+}
+
+/* Mobile-friendly tables */
+@media (max-width: 768px) {
+    .responsive-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .responsive-table table {
+        min-width: 600px;
+    }
+}
+
+/* Touch-friendly buttons */
+.touch-friendly {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 30;
+    background: #0ea5e9;
+    color: white;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Notification dropdown */
+.notification-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    display: none;
+}
+
+.notification-dropdown.show {
+    display: block;
+}
+
+@media (max-width: 640px) {
+    .notification-dropdown {
+        width: 280px;
+        right: -1rem;
+    }
+}
+
+/* Search dropdown */
+.search-dropdown {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    display: none;
+}
+
+.search-dropdown.show {
+    display: block;
+}
+
+/* Mobile-first grid */
+.mobile-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .mobile-grid-1 {
+        grid-template-columns: 1fr;
+    }
+    .mobile-grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Improved mobile spacing */
+.mobile-padding {
+    padding: 1rem;
+}
+
+@media (max-width: 640px) {
+    .mobile-padding {
+        padding: 0.75rem;
+    }
+}
+
+/* Better touch targets */
+.touch-target {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+/* Sticky header */
+.sticky.top-0 {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+/* Form fixes */
+.form-input:focus + .absolute i,
+.form-input:focus ~ .absolute i {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure icons don't disappear on focus */
+.absolute.inset-y-0.left-0.pl-3.flex.items-center {
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Ensure icons stay visible */
+.form-input:focus ~ .absolute i[data-feather="mail"],
+.form-input:focus ~ .absolute i[data-feather="lock"] {
+    color: #6b7280 !important; /* gray-500 */
+}
+
+/* For password toggle button */
+#togglePassword {
+    z-index: 10;
+}
+
+#togglePassword i {
+    pointer-events: auto;
+}
+
+/* Ensure form inputs don't overlap icons */
+.form-input {
+    position: relative;
+    z-index: 1;
+}
+
+/* Keep icons visible during all input states */
+.form-input:focus,
+.form-input:active,
+.form-input:hover {
+    /* Ensure sibling icons stay visible */
+}
+.form-input:focus ~ .absolute i,
+.form-input:active ~ .absolute i,
+.form-input:hover ~ .absolute i {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Specific fix for mail and lock icons */
+.form-input:focus ~ .absolute i {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Override any Tailwind opacity changes */
+.absolute i[data-feather] {
+    opacity: 1 !important;
+    display: inline-block !important;
+}
+
+/* Ensure the icon container stays visible */
+.absolute.inset-y-0.left-0 {
+    opacity: 1 !important;
+    visibility: visible !important;
+}

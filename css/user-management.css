@@ -1,0 +1,207 @@
+/* User Management Page Styles */
+
+/* Sidebar transitions */
+.sidebar {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 1023px) {
+    .sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 50;
+        transform: translateX(-100%);
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        display: none;
+    }
+    .mobile-overlay.active {
+        display: block;
+    }
+    .main-content {
+        transition: margin-left 0.3s ease-in-out;
+    }
+}
+
+/* Active navigation item */
+.active-nav-item {
+    background-color: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+}
+
+/* DataTables styling */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    padding: 1rem;
+}
+
+/* Custom table styling */
+#userManagementTable {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#userManagementTable thead th {
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+#userManagementTable tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+#userManagementTable tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+#userManagementTable tbody td {
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+/* Checkbox styling */
+.user-checkbox {
+    transform: scale(1.1);
+}
+
+/* Action buttons styling */
+.action-btn {
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    #userManagementTable {
+        font-size: 0.875rem;
+    }
+    
+    #userManagementTable thead th,
+    #userManagementTable tbody td {
+        padding: 0.5rem;
+    }
+}
+
+/* Header actions */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+    .header-actions {
+        gap: 0.25rem;
+    }
+    .search-container {
+        width: 150px;
+    }
+    .notification-btn {
+        padding: 0.25rem;
+    }
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 30;
+    background: #0ea5e9;
+    color: white;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Touch-friendly buttons */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Notification dropdown */
+.notification-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    display: none;
+}
+
+.notification-dropdown.show {
+    display: block;
+}
+
+@media (max-width: 640px) {
+    .notification-dropdown {
+        width: 280px;
+        right: -1rem;
+    }
+}
+
+/* Search dropdown */
+.search-dropdown {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    display: none;
+}
+
+.search-dropdown.show {
+    display: block;
+}
+
+/* Mobile padding */
+.mobile-padding {
+    padding: 1rem;
+}
+
+@media (max-width: 640px) {
+    .mobile-padding {
+        padding: 0.75rem;
+    }
+}

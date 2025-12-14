@@ -1,0 +1,67 @@
+/* Form Field Icon Fix */
+/* Ensure icons remain visible when input is focused */
+
+.form-input:focus + .absolute i,
+.form-input:focus ~ .absolute i {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure icons don't disappear on focus */
+.absolute.inset-y-0.left-0.pl-3.flex.items-center {
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Make sure icons stay visible */
+.form-input:focus ~ .absolute i[data-feather="mail"],
+.form-input:focus ~ .absolute i[data-feather="lock"] {
+    color: #6b7280 !important; /* gray-500 */
+}
+
+/* For password toggle button */
+#togglePassword {
+    z-index: 10;
+}
+
+#togglePassword i {
+    pointer-events: auto;
+}
+
+/* Ensure form inputs don't overlap icons */
+.form-input {
+    position: relative;
+    z-index: 1;
+}
+
+/* Keep icons visible during all input states */
+.form-input:focus,
+.form-input:active,
+.form-input:hover {
+    /* Ensure sibling icons stay visible */
+}
+.form-input:focus ~ .absolute i,
+.form-input:active ~ .absolute i,
+.form-input:hover ~ .absolute i {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Specific fix for mail and lock icons */
+.form-input:focus ~ .absolute i {
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Override any Tailwind opacity changes */
+.absolute i[data-feather] {
+    opacity: 1 !important;
+    display: inline-block !important;
+}
+
+/* Ensure the icon container stays visible */
+.absolute.inset-y-0.left-0 {
+    opacity: 1 !important;
+    visibility: visible !important;
+}

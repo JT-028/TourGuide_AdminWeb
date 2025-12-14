@@ -11,29 +11,48 @@ class RealTimeSyncManager {
     }
 
     init() {
-        this.setupConnectionMonitoring();
-        this.setupRealTimeListeners();
-        this.setupOfflineHandling();
+        // Wait for Firebase services to be available
+        const waitForFirebase = () => {
+            if (typeof firebaseServices !== 'undefined' && firebaseServices.db) {
+                this.setupConnectionMonitoring();
+                this.setupRealTimeListeners();
+                this.setupOfflineHandling();
+            } else {
+                setTimeout(waitForFirebase, 100);
+            }
+        };
+        waitForFirebase();
     }
 
     setupConnectionMonitoring() {
         // Monitor Firebase connection status
-        firebaseServices.db.enableNetwork().then(() => {
-            this.isConnected = true;
-            this.reconnectAttempts = 0;
-            this.updateConnectionStatus(true);
-        }).catch((error) => {
-            console.error('Failed to enable network:', error);
-            this.isConnected = false;
-            this.updateConnectionStatus(false);
-        });
+        if (firebaseServices.db && typeof firebaseServices.db.enableNetwork === 'function') {
+            firebaseServices.db.enableNetwork().then(() => {
+                this.isConnected = true;
+                this.reconnectAttempts = 0;
+                this.updateConnectionStatus(true);
+            }).catch((error) => {
+                console.error('Failed to enable network:', error);
+                this.isConnected = false;
+                this.updateConnectionStatus(false);
+            });
+        } else {
+            console.warn('Firebase database enableNetwork not available');
+            this.isConnected = true; // Assume connected if not available
+        }
 
         // Listen for connection state changes
-        firebaseServices.db.onDisconnect().then(() => {
-            this.isConnected = false;
-            this.updateConnectionStatus(false);
-            this.handleDisconnection();
-        });
+        if (firebaseServices.db && typeof firebaseServices.db.onDisconnect === 'function') {
+            firebaseServices.db.onDisconnect().then(() => {
+                this.isConnected = false;
+                this.updateConnectionStatus(false);
+                this.handleDisconnection();
+            }).catch((error) => {
+                console.warn('onDisconnect not available:', error);
+            });
+        } else {
+            console.warn('Firebase onDisconnect not available');
+        }
     }
 
     setupRealTimeListeners() {
@@ -564,7 +583,19 @@ class RealTimeSyncManager {
 
 // Initialize real-time sync manager when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.realTimeSyncManager = new RealTimeSyncManager();
+    // Wait for Firebase services to be available
+    const waitForFirebase = () => {
+        if (typeof firebaseServices !== 'undefined' && firebaseServices.db) {
+            try {
+                window.realTimeSyncManager = new RealTimeSyncManager();
+            } catch (error) {
+                console.error('Failed to initialize RealTimeSyncManager:', error);
+            }
+        } else {
+            setTimeout(waitForFirebase, 100);
+        }
+    };
+    waitForFirebase();
 });
 
 // Cleanup on page unload

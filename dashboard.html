@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TourApp Admin Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="web_icon/web_icon.svg">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/form-fixes.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    <!-- jQuery for DataTables -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -27,45 +33,485 @@
     <script src="js/admin-registration.js"></script>
     <script src="js/real-time-sync.js"></script>
     <script src="js/admin-android-sync.js"></script>
-    <style>
-        .sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        @media (max-width: 1023px) {
-            .sidebar {
-                position: fixed;
-                height: 100vh;
-                z-index: 50;
+    
+    <!-- Mobile Navigation and Search/Notification System -->
+    <script>
+        // Mobile Navigation
+        class MobileNavigation {
+            constructor() {
+                this.sidebar = document.querySelector('.sidebar');
+                this.sidebarToggle = document.getElementById('sidebarToggle');
+                this.closeSidebar = document.getElementById('closeSidebar');
+                this.mobileOverlay = document.getElementById('mobileOverlay');
+                this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                
+                this.init();
             }
-            .flex-1 {
-                transition: transform 0.3s ease-in-out;
+            
+            init() {
+                this.setupEventListeners();
+                this.handleResize();
             }
-            .sidebar.-translate-x-full + .flex-1 {
-                transform: translateX(0);
+            
+            setupEventListeners() {
+                this.sidebarToggle?.addEventListener('click', () => this.openSidebar());
+                this.closeSidebar?.addEventListener('click', () => this.closeSidebarMenu());
+                this.mobileOverlay?.addEventListener('click', () => this.closeSidebarMenu());
+                this.mobileMenuBtn?.addEventListener('click', () => this.toggleSidebar());
+                
+                window.addEventListener('resize', () => this.handleResize());
+                
+                // Close sidebar when clicking on nav links (mobile)
+                document.querySelectorAll('.sidebar a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        if (window.innerWidth < 1024) {
+                            this.closeSidebarMenu();
+                        }
+                    });
+                });
             }
-            .sidebar:not(.-translate-x-full) + .flex-1 {
-                transform: translateX(16rem);
+            
+            openSidebar() {
+                this.sidebar?.classList.add('open');
+                this.mobileOverlay?.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeSidebarMenu() {
+                this.sidebar?.classList.remove('open');
+                this.mobileOverlay?.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            toggleSidebar() {
+                if (this.sidebar?.classList.contains('open')) {
+                    this.closeSidebarMenu();
+                } else {
+                    this.openSidebar();
+                }
+            }
+            
+            handleResize() {
+                if (window.innerWidth >= 1024) {
+                    this.closeSidebarMenu();
+                }
             }
         }
-
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        
+        // Global Search System
+        class GlobalSearch {
+            constructor() {
+                this.searchInput = document.getElementById('globalSearch');
+                this.searchDropdown = document.getElementById('searchDropdown');
+                this.searchResults = [];
+                this.searchTimeout = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadSearchData();
+            }
+            
+            setupEventListeners() {
+                this.searchInput?.addEventListener('input', (e) => this.handleSearch(e.target.value));
+                this.searchInput?.addEventListener('focus', () => this.showDropdown());
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.searchInput?.contains(e.target) && !this.searchDropdown?.contains(e.target)) {
+                        this.hideDropdown();
+                    }
+                });
+                
+                // Handle escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideDropdown();
+                    }
+                });
+            }
+            
+            async loadSearchData() {
+                try {
+                    // Load searchable content from Firebase
+                    const usersSnapshot = await firebaseServices.usersCollection.limit(100).get();
+                    const tripsSnapshot = await firebaseServices.tripsCollection.limit(50).get();
+                    
+                    this.searchResults = [
+                        ...usersSnapshot.docs.map(doc => ({
+                            type: 'user',
+                            id: doc.id,
+                            title: `${doc.data().firstName || ''} ${doc.data().lastName || ''}`,
+                            subtitle: doc.data().email || '',
+                            icon: 'user',
+                            url: 'user-management.html',
+                            data: doc.data()
+                        })),
+                        ...tripsSnapshot.docs.map(doc => ({
+                            type: 'trip',
+                            id: doc.id,
+                            title: doc.data().tripName || 'Unnamed Trip',
+                            subtitle: doc.data().destination || '',
+                            icon: 'map',
+                            url: 'trips-enhanced.html',
+                            data: doc.data()
+                        }))
+                    ];
+                } catch (error) {
+                    console.error('Error loading search data:', error);
+                }
+            }
+            
+            handleSearch(query) {
+                clearTimeout(this.searchTimeout);
+                
+                if (!query.trim()) {
+                    this.hideDropdown();
+                    return;
+                }
+                
+                this.searchTimeout = setTimeout(() => {
+                    this.performSearch(query.trim().toLowerCase());
+                }, 300);
+            }
+            
+            performSearch(query) {
+                if (!query) {
+                    this.hideDropdown();
+                    return;
+                }
+                
+                const results = this.searchResults.filter(item => 
+                    item.title.toLowerCase().includes(query) ||
+                    item.subtitle.toLowerCase().includes(query) ||
+                    item.type.toLowerCase().includes(query)
+                ).slice(0, 8);
+                
+                this.renderResults(results);
+                this.showDropdown();
+            }
+            
+            renderResults(results) {
+                if (results.length === 0) {
+                    this.searchDropdown.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i data-feather="search" class="w-8 h-8 mx-auto mb-2"></i>
+                            <p>No results found</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.searchDropdown.innerHTML = results.map(item => `
+                    <div class="search-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+                         onclick="globalSearch.navigateTo('${item.url}', '${item.id}')">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i data-feather="${item.icon}" class="w-4 h-4 text-gray-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${this.highlightMatch(item.title)}</p>
+                                <p class="text-xs text-gray-500 truncate">${this.highlightMatch(item.subtitle)}</p>
+                                <p class="text-xs text-gray-400 capitalize">${item.type}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                feather.replace();
+            }
+            
+            highlightMatch(text) {
+                const query = this.searchInput.value.toLowerCase();
+                if (!query) return text;
+                
+                const regex = new RegExp(`(${query})`, 'gi');
+                return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+            }
+            
+            navigateTo(url, id) {
+                if (id) {
+                    window.location.href = `${url}?id=${id}`;
+                } else {
+                    window.location.href = url;
+                }
+                this.hideDropdown();
+            }
+            
+            showDropdown() {
+                this.searchDropdown?.classList.add('show');
+            }
+            
+            hideDropdown() {
+                this.searchDropdown?.classList.remove('show');
+            }
         }
-        .active-nav-item {
-            background-color: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
+        
+        // Notification System
+        class NotificationSystem {
+            constructor() {
+                this.notificationBell = document.getElementById('notificationBell');
+                this.notificationDropdown = document.getElementById('notificationDropdown');
+                this.notificationBadge = document.getElementById('notificationBadge');
+                this.notifications = [];
+                this.unreadCount = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadNotifications();
+                this.setupRealtimeListener();
+            }
+            
+            setupEventListeners() {
+                this.notificationBell?.addEventListener('click', () => this.toggleDropdown());
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!this.notificationBell?.contains(e.target) && !this.notificationDropdown?.contains(e.target)) {
+                        this.hideDropdown();
+                    }
+                });
+            }
+            
+            async loadNotifications() {
+                try {
+                    const snapshot = await firebaseServices.db.collection('admin_notifications')
+                        .orderBy('timestamp', 'desc')
+                        .limit(20)
+                        .get();
+                    
+                    this.notifications = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    this.updateUnreadCount();
+                    this.renderNotifications();
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+            
+            setupRealtimeListener() {
+                // Listen for new notifications
+                firebaseServices.db.collection('admin_notifications')
+                    .where('timestamp', '>', new Date())
+                    .onSnapshot((snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added') {
+                                const notification = {
+                                    id: change.doc.id,
+                                    ...change.doc.data()
+                                };
+                                this.addNotification(notification);
+                            }
+                        });
+                    });
+            }
+            
+            addNotification(notification) {
+                this.notifications.unshift(notification);
+                if (this.notifications.length > 20) {
+                    this.notifications = this.notifications.slice(0, 20);
+                }
+                this.updateUnreadCount();
+                this.renderNotifications();
+                
+                // Show browser notification if enabled
+                if (Notification.permission === 'granted' && !notification.read) {
+                    new Notification(notification.title, {
+                        body: notification.message,
+                        icon: '/web_icon/web_icon.svg'
+                    });
+                }
+            }
+            
+            updateUnreadCount() {
+                this.unreadCount = this.notifications.filter(n => !n.read).length;
+                this.updateBadge();
+            }
+            
+            updateBadge() {
+                if (this.unreadCount > 0) {
+                    this.notificationBadge.textContent = this.unreadCount > 9 ? '9+' : this.unreadCount;
+                    this.notificationBadge.classList.remove('hidden');
+                } else {
+                    this.notificationBadge.classList.add('hidden');
+                }
+            }
+            
+            renderNotifications() {
+                if (this.notifications.length === 0) {
+                    this.notificationDropdown.innerHTML = `
+                        <div class="p-4 text-center text-gray-500">
+                            <i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2"></i>
+                            <p>No notifications</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.notificationDropdown.innerHTML = this.notifications.map(notification => `
+                    <div class="notification-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${!notification.read ? 'bg-blue-50' : ''}" 
+                         onclick="notificationSystem.markAsRead('${notification.id}')">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-${this.getNotificationColor(notification.type)}-100 rounded-full flex items-center justify-center">
+                                <i data-feather="${this.getNotificationIcon(notification.type)}" class="w-4 h-4 text-${this.getNotificationColor(notification.type)}-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                                <p class="text-xs text-gray-600">${notification.message}</p>
+                                <p class="text-xs text-gray-400">${this.formatTimestamp(notification.timestamp)}</p>
+                            </div>
+                            ${!notification.read ? '<div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full"></div>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add notification footer
+                this.notificationDropdown.innerHTML += `
+                    <div class="p-2 border-t border-gray-200">
+                        <button onclick="notificationSystem.markAllAsRead()" class="w-full text-center text-xs text-gray-500 hover:text-gray-700 py-1">
+                            Mark all as read
+                        </button>
+                    </div>
+                `;
+                
+                feather.replace();
+            }
+            
+            getNotificationColor(type) {
+                const colors = {
+                    'info': 'blue',
+                    'warning': 'yellow',
+                    'error': 'red',
+                    'success': 'green',
+                    'system': 'purple'
+                };
+                return colors[type] || 'gray';
+            }
+            
+            getNotificationIcon(type) {
+                const icons = {
+                    'info': 'info',
+                    'warning': 'alert-triangle',
+                    'error': 'alert-circle',
+                    'success': 'check-circle',
+                    'system': 'settings'
+                };
+                return icons[type] || 'bell';
+            }
+            
+            formatTimestamp(timestamp) {
+                if (!timestamp) return 'Just now';
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+                return date.toLocaleDateString();
+            }
+            
+            async markAsRead(notificationId) {
+                try {
+                    await firebaseServices.db.collection('admin_notifications').doc(notificationId).update({
+                        read: true,
+                        readAt: new Date()
+                    });
+                    
+                    const notification = this.notifications.find(n => n.id === notificationId);
+                    if (notification) {
+                        notification.read = true;
+                        this.updateUnreadCount();
+                        this.renderNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            }
+            
+            async markAllAsRead() {
+                try {
+                    const unreadNotifications = this.notifications.filter(n => !n.read);
+                    const batch = firebaseServices.db.batch();
+                    
+                    unreadNotifications.forEach(notification => {
+                        const ref = firebaseServices.db.collection('admin_notifications').doc(notification.id);
+                        batch.update(ref, {
+                            read: true,
+                            readAt: new Date()
+                        });
+                    });
+                    
+                    await batch.commit();
+                    
+                    this.notifications.forEach(n => n.read = true);
+                    this.updateUnreadCount();
+                    this.renderNotifications();
+                } catch (error) {
+                    console.error('Error marking all notifications as read:', error);
+                }
+            }
+            
+            toggleDropdown() {
+                if (this.notificationDropdown?.classList.contains('show')) {
+                    this.hideDropdown();
+                } else {
+                    this.showDropdown();
+                }
+            }
+            
+            showDropdown() {
+                this.notificationDropdown?.classList.add('show');
+            }
+            
+            hideDropdown() {
+                this.notificationDropdown?.classList.remove('show');
+            }
         }
-    </style>
-<head>
+        
+        // Initialize systems when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize mobile navigation
+            window.mobileNav = new MobileNavigation();
+            
+            // Initialize global search
+            window.globalSearch = new GlobalSearch();
+            
+            // Initialize notification system
+            window.notificationSystem = new NotificationSystem();
+            
+            // Request notification permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/form-fixes.css">
+</head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="mobile-overlay"></div>
+        
+        <!-- Sidebar -->
         <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
-            <div class="p-4 border-b">
+            <div class="p-4 border-b flex justify-between items-center">
                 <h1 class="text-xl font-bold text-sky-600 flex items-center">
                     <i data-feather="compass" class="mr-2"></i>
                     TourApp Admin
                 </h1>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
             </div>
             <nav class="flex-1 overflow-y-auto">
                 <div class="p-4">
@@ -113,25 +559,128 @@
             <header class="bg-white shadow-sm">
                 <div class="px-4 py-3 flex justify-between items-center">
                     <div class="flex items-center">
-                        <button class="text-gray-500 focus:outline-none lg:hidden" id="sidebarToggle">
+                        <button class="text-gray-500 focus:outline-none lg:hidden touch-target" id="sidebarToggle">
                             <i data-feather="menu" class="w-6 h-6"></i>
                         </button>
                         <h2 class="ml-2 text-lg font-medium text-gray-900">Dashboard</h2>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <div id="connectionStatus" class="flex items-center text-sm text-green-600">
-                            <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
-                            Connected
-                        </div>
-                        <div id="syncIndicator" class="hidden"></div>
-                        <button class="text-gray-500 hover:text-gray-700">
-                            <i data-feather="bell" class="w-5 h-5"></i>
-                        </button>
-                        <div class="relative">
-                            <input type="text" placeholder="Search..." class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500">
-                            <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                    <div class="flex items-center space-x-4 header-actions">
+                            <div id="connectionStatus" class="flex items-center text-sm text-green-600 hidden md:flex">
+                                <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
+                                Connected
+                            </div>
+                            <div id="syncIndicator" class="hidden"></div>
+                            
+                            <!-- Search Container -->
+                            <div class="relative search-container">
+                                <input type="text" id="globalSearch" placeholder="Search..." 
+                                       class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 w-full">
+                                <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                                <!-- Search Dropdown -->
+                                <div id="searchDropdown" class="search-dropdown"></div>
+                            </div>
+                            
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notificationBell" class="text-gray-500 hover:text-gray-700 notification-btn touch-target relative">
+                                    <i data-feather="bell" class="w-5 h-5"></i>
+                                    <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
+                                </button>
+                                <!-- Notification Dropdown -->
+                                <div id="notificationDropdown" class="notification-dropdown"></div>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="p-6 mobile-padding">
+                <!-- Dashboard Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 mobile-grid mobile-grid-2">
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-sky-100 text-sky-600">
+                                <i data-feather="users" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Total Users</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="total-users">
+                                    <span id="total-users-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="total-users-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600">
+                                <i data-feather="user-plus" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Teachers</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="teacher-count">
+                                    <span id="teacher-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="teacher-count-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                                <i data-feather="user" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Students</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="student-count">
+                                    <span id="student-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="student-count-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                                <i data-feather="map" class="w-6 h-6"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Active Trips</p>
+                                <p class="text-2xl font-semibold text-gray-900" id="active-trips">
+                                    <span id="active-trips-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
+                                    <span id="active-trips-value" class="hidden">0</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Tables -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">User Registration Trends</h3>
+                        <div class="responsive-table">
+                            <canvas id="registrationChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+                        <div class="space-y-4" id="recent-activities">
+                            <div class="text-center text-gray-500 py-8">
+                                <i data-feather="activity" class="w-12 h-12 mx-auto mb-2"></i>
+                                <p>Loading recent activities...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn" class="mobile-menu-btn touch-target">
+            <i data-feather="menu" class="w-6 h-6"></i>
+        </button>
                 </div>
             </header>
 
