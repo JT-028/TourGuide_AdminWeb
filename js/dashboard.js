@@ -75,6 +75,7 @@ class DashboardManager {
             ]);
 
             this.updateDashboardStats(usersData, tripsData);
+            this.updateRegistrationChart(usersData);
             this.updateRecentActivity(recentActivity);
             this.updateRecentUsersTable(usersData);
             this.updateQuickActions();
@@ -213,6 +214,63 @@ class DashboardManager {
         this.updateStatCard('completed-trips', tripsData.completed);
     }
 
+    updateRegistrationChart(usersData) {
+        const canvas = document.getElementById('registrationChart');
+        if (!canvas || !window.Chart) return;
+
+        const countsByMonth = {};
+        usersData.allUsers.forEach(user => {
+            const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
+            if (!createdAt || isNaN(createdAt)) return;
+            const key = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+            countsByMonth[key] = (countsByMonth[key] || 0) + 1;
+        });
+
+        const sortedKeys = Object.keys(countsByMonth).sort();
+        const labels = sortedKeys.length ? sortedKeys : ['No data'];
+        const data = sortedKeys.length ? sortedKeys.map(k => countsByMonth[k]) : [0];
+
+        if (this.registrationChart) {
+            this.registrationChart.data.labels = labels;
+            this.registrationChart.data.datasets[0].data = data;
+            this.registrationChart.update();
+            return;
+        }
+
+        this.registrationChart = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'User registrations',
+                    data,
+                    borderColor: 'rgb(56, 189, 248)',
+                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
     updateStatCard(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) {
@@ -348,7 +406,7 @@ class DashboardManager {
                 window.location.href = 'data-backup.html';
                 break;
             case 'view-trips':
-                window.location.href = 'trips.html';
+                window.location.href = 'trips-enhanced.html';
                 break;
             case 'system-settings':
                 window.location.href = 'settings.html';

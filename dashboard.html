@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/form-fixes.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     
@@ -665,7 +666,7 @@
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-                        <div class="space-y-4" id="recent-activities">
+                        <div class="space-y-4 recent-activity-container" id="recent-activities">
                             <div class="text-center text-gray-500 py-8">
                                 <i data-feather="activity" class="w-12 h-12 mx-auto mb-2"></i>
                                 <p>Loading recent activities...</p>
@@ -722,11 +723,12 @@
             }
             
             testFirebaseConnection();
-            loadDashboardDataImmediately();
             
             if (typeof DashboardManager !== 'undefined') {
                 console.log('Using DashboardManager class');
                 window.dashboardManager = new DashboardManager();
+            } else {
+                console.warn('DashboardManager is not defined');
             }
         }
 

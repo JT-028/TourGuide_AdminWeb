@@ -390,15 +390,15 @@ class NotificationSystem {
                 read: true,
                 readAt: new Date()
             });
-            
-            const notification = this.notifications.find(n => n.id === notificationId);
-            if (notification) {
-                notification.read = true;
-                this.updateUnreadCount();
-                this.renderNotifications();
-            }
         } catch (error) {
             console.error('Error marking notification as read:', error);
+        }
+        
+        const notification = this.notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.read = true;
+            this.updateUnreadCount();
+            this.renderNotifications();
         }
     }
     
@@ -414,14 +414,12 @@ class NotificationSystem {
                     readAt: new Date()
                 });
             });
-            
-            await batch.commit();
-            
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        } finally {
             this.notifications.forEach(n => n.read = true);
             this.updateUnreadCount();
             this.renderNotifications();
-        } catch (error) {
-            console.error('Error marking all notifications as read:', error);
         }
     }
     

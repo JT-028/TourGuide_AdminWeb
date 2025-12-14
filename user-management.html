@@ -315,64 +315,64 @@
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
-        <!-- Main Content -->
-        <div class="flex-1 overflow-auto main-content">
-            <!-- Mobile Overlay -->
-            <div id="mobileOverlay" class="mobile-overlay"></div>
-            
-            <!-- Sidebar -->
-            <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
-                <div class="p-4 border-b flex justify-between items-center">
-                    <h1 class="text-xl font-bold text-sky-600 flex items-center">
-                        <i data-feather="compass" class="mr-2"></i>
-                        TourApp Admin
-                    </h1>
-                    <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
-                        <i data-feather="x" class="w-5 h-5"></i>
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="mobile-overlay"></div>
+
+        <!-- Sidebar -->
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h1 class="text-xl font-bold text-sky-600 flex items-center">
+                    <i data-feather="compass" class="mr-2"></i>
+                    TourApp Admin
+                </h1>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
+                    <a href="dashboard.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="home" class="w-5 h-5"></i>
+                        <span class="ml-3">Dashboard</span>
+                    </a>
+                    <a href="user-management.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
+                        <i data-feather="user-check" class="w-5 h-5"></i>
+                        <span class="ml-3">User Management</span>
+                    </a>
+                </div>
+                <div class="p-4 border-t">
+                    <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
+                    <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                        <span class="ml-3">Register Users</span>
+                    </a>
+                    <a href="data-backup.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="database" class="w-5 h-5"></i>
+                        <span class="ml-3">Data Backup</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                        <i data-feather="settings" class="w-5 h-5"></i>
+                        <span class="ml-3">Settings</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="p-4 border-t">
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full object-cover" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K" alt="Admin" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K'">
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900 admin-name">Admin</p>
+                        <p class="text-xs text-gray-500 admin-email"></p>
+                    </div>
+                    <button onclick="window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <nav class="flex-1 overflow-y-auto">
-                    <div class="p-4">
-                        <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Main</p>
-                        <a href="dashboard.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                            <i data-feather="home" class="w-5 h-5"></i>
-                            <span class="ml-3">Dashboard</span>
-                        </a>
-                        <a href="user-management.html" class="flex items-center p-2 text-sky-600 rounded-lg active-nav-item">
-                            <i data-feather="user-check" class="w-5 h-5"></i>
-                            <span class="ml-3">User Management</span>
-                        </a>
-    </div>
-                    <div class="p-4 border-t">
-                        <p class="text-xs uppercase text-gray-500 font-semibold mb-2">Management</p>
-                        <a href="register-users.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                            <i data-feather="user-plus" class="w-5 h-5"></i>
-                            <span class="ml-3">Register Users</span>
-                        </a>
-                        <a href="data-backup.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                            <i data-feather="database" class="w-5 h-5"></i>
-                            <span class="ml-3">Data Backup</span>
-                        </a>
-                        <a href="settings.html" class="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                            <i data-feather="settings" class="w-5 h-5"></i>
-                            <span class="ml-3">Settings</span>
-                        </a>
-                    </div>
-                </nav>
-                <div class="p-4 border-t">
-                    <div class="flex items-center">
-                        <img class="w-10 h-10 rounded-full object-cover" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K" alt="Admin" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K'">
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-gray-900 admin-name">Admin</p>
-                            <p class="text-xs text-gray-500 admin-email"></p>
-                        </div>
-                        <button onclick="window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
-                            <i data-feather="log-out" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
+        </div>
 
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto main-content">
             <!-- Top Navigation -->
             <header class="bg-white shadow-sm sticky top-0 z-40">
                 <div class="px-4 py-3 flex justify-between items-center">
@@ -543,22 +543,14 @@
     </div>
 
     <script>
-        // Sidebar toggle functionality
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        });
-
-        // Initialize feather icons
         feather.replace();
         
-        // Verify SweetAlert2 is loaded
         if (typeof Swal !== 'undefined') {
             console.log('SweetAlert2 is loaded and ready');
         } else {
             console.error('SweetAlert2 not loaded');
         }
         
-        // Refresh Feather icons periodically for dynamic content
         setInterval(() => {
             feather.replace();
         }, 1000);
