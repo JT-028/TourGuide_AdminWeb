@@ -224,8 +224,8 @@ class AuthManager {
     }
 
     redirectToLogin() {
-        if (window.location.pathname !== '/login.html' && !window.location.pathname.includes('login.html')) {
-            window.location.href = 'login.html';
+        if (window.location.pathname !== '/index.html' && !window.location.pathname.includes('index.html')) {
+            window.location.href = 'index.html';
         }
     }
 

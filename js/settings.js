@@ -53,6 +53,9 @@ class SettingsManager {
     async loadSettings() {
         try {
             console.log('Loading settings from Firebase...');
+            if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                throw new Error('Not authenticated as admin');
+            }
             
             // Load system settings from Firestore
             const settingsDoc = await firebaseServices.db.collection('settings').doc('system').get();
@@ -227,6 +230,9 @@ class SettingsManager {
         const originalText = saveBtn.innerHTML;
         
         try {
+            if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                throw new Error('Not authenticated as admin');
+            }
             // Show loading state
             saveBtn.innerHTML = '<i data-feather="loader" class="w-4 h-4 mr-2 animate-spin"></i>Saving...';
             saveBtn.disabled = true;
@@ -242,7 +248,17 @@ class SettingsManager {
             console.log('Saving settings:', this.settings);
 
             // Save to Firestore
-            await firebaseServices.db.collection('settings').doc('system').set(this.settings, { merge: true });
+            const settingsRef = firebaseServices.db.collection('settings').doc('system');
+            try {
+                await settingsRef.set(this.settings, { merge: true });
+            } catch (innerErr) {
+                if (innerErr.code === 'permission-denied') {
+                    const nested = this.flattenObject(this.settings, '');
+                    await settingsRef.update(nested);
+                } else {
+                    throw innerErr;
+                }
+            }
 
             // Update Android app settings if needed
             await this.syncWithAndroidApp();
@@ -262,7 +278,17 @@ class SettingsManager {
             console.error('Error saving settings:', error);
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
-            this.showError(`Failed to save settings: ${error.message}`);
+            if (error.code === 'permission-denied' || /insufficient permissions/i.test(error.message)) {
+                const uid = firebaseServices.auth.currentUser?.uid || 'unknown';
+                let role = 'unknown';
+                try {
+                    const userDoc = await firebaseServices.usersCollection.doc(uid).get();
+                    role = (userDoc.data()?.role || 'unknown');
+                } catch {}
+                this.showError(`Failed to save settings: Missing or insufficient permissions. Your role: ${role}. Please ensure your account is marked as admin in Firestore.`);
+            } else {
+                this.showError(`Failed to save settings: ${error.message}`);
+            }
         }
     }
 
@@ -311,6 +337,19 @@ class SettingsManager {
         if (checkboxes[10]) this.settings.notificationSettings.tripUpdatesSMS = checkboxes[10].checked;
     }
 
+    flattenObject(obj, prefix) {
+        const result = {};
+        for (const [key, value] of Object.entries(obj || {})) {
+            const path = prefix ? `${prefix}.${key}` : key;
+            if (value && typeof value === 'object' && !Array.isArray(value) && !(value.toDate)) {
+                Object.assign(result, this.flattenObject(value, path));
+            } else {
+                result[path] = value;
+            }
+        }
+        return result;
+    }
+
     async syncWithAndroidApp() {
         try {
             // Create a settings document specifically for Android app
@@ -328,7 +367,16 @@ class SettingsManager {
                 source: 'admin_web_interface'
             };
 
-            await firebaseServices.db.collection('settings').doc('android_app').set(androidSettings, { merge: true });
+            try {
+                await firebaseServices.db.collection('settings').doc('android_app').set(androidSettings, { merge: true });
+            } catch (innerErr) {
+                if (innerErr.code === 'permission-denied') {
+                    const nestedAndroid = this.flattenObject(androidSettings, '');
+                    await firebaseServices.db.collection('settings').doc('android_app').update(nestedAndroid);
+                } else {
+                    throw innerErr;
+                }
+            }
             
             console.log('Settings synced with Android app');
             return true;

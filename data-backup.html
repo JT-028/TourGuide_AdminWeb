@@ -22,6 +22,7 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-guard.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/auto-backup.js"></script>
     
     <style>
         .sidebar {
@@ -1482,7 +1483,10 @@
         async function loadBackupSettings() {
             try {
                 console.log('Loading backup settings...');
-                const settingsRef = firebase.firestore().collection('settings').doc('system');
+                if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                    throw new Error('Not authenticated as admin');
+                }
+                const settingsRef = firebaseServices.db.collection('settings').doc('system');
                 const settingsDoc = await settingsRef.get();
                 
                 let backupSettings = getDefaultBackupSettings();
@@ -1516,6 +1520,9 @@
         // Save backup settings to Firestore
         async function saveSettings() {
             try {
+                if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                    throw new Error('Not authenticated as admin');
+                }
                 const saveBtn = document.getElementById('saveSettings');
                 const originalText = saveBtn.innerHTML;
                 
@@ -1545,10 +1552,27 @@
                 }
                 
                 // Save to Firestore
-                const settingsRef = firebase.firestore().collection('settings').doc('system');
-                await settingsRef.set({
-                    backupSettings: backupSettings
-                }, { merge: true });
+                const settingsRef = firebaseServices.db.collection('settings').doc('system');
+                try {
+                    await settingsRef.set({
+                        backupSettings: backupSettings
+                    }, { merge: true });
+                } catch (innerErr) {
+                    if (innerErr.code === 'permission-denied') {
+                        await settingsRef.update({
+                            'backupSettings.autoBackup': backupSettings.autoBackup,
+                            'backupSettings.backupFrequency': backupSettings.backupFrequency,
+                            'backupSettings.retentionDays': backupSettings.retentionDays,
+                            'backupSettings.retentionLimit': backupSettings.retentionLimit,
+                            'backupSettings.defaultBackupType': backupSettings.defaultBackupType,
+                            'backupSettings.defaultFormat': backupSettings.defaultFormat,
+                            'backupSettings.lastUpdated': backupSettings.lastUpdated,
+                            'backupSettings.updatedBy': backupSettings.updatedBy
+                        });
+                    } else {
+                        throw innerErr;
+                    }
+                }
                 
                 // Reset button
                 saveBtn.innerHTML = originalText;
@@ -1663,7 +1687,10 @@
         // Toggle auto backup - enhanced
         async function toggleAutoBackup(e) {
             try {
-                const settingsRef = firebase.firestore().collection('settings').doc('system');
+                if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                    throw new Error('Not authenticated as admin');
+                }
+                const settingsRef = firebaseServices.db.collection('settings').doc('system');
                 await settingsRef.set({
                     backupSettings: {
                         autoBackup: e.target.checked,

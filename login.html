@@ -30,7 +30,7 @@
                     firebaseServices.auth.onAuthStateChanged((user) => {
                         if (user) {
                             console.log('User already logged in, redirecting to dashboard');
-                            window.location.href = 'index.html';
+                            window.location.href = 'dashboard.html';
                         }
                     });
                 }
@@ -299,12 +299,12 @@
                     
                     // Redirect to dashboard after a short delay
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = 'dashboard.html';
                     }, 2000);
                 } else {
                     showStatusMessage('Login successful! Redirecting to dashboard...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = 'dashboard.html';
                     }, 1000);
                 }
                 
