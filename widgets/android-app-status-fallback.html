@@ -189,7 +189,12 @@ function setupQuickActions() {
     buttons.forEach(button => {
         button.addEventListener('click', function() {
             const text = this.textContent.trim();
-            alert(`${text} functionality will be implemented soon.`);
+            Swal.fire({
+                title: `${text} Coming Soon`,
+                text: `${text} functionality will be implemented soon.`,
+                icon: 'info',
+                confirmButtonColor: '#6b7280'
+            });
         });
     });
 }

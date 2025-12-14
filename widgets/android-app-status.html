@@ -395,7 +395,12 @@
             adminAndroidSync.showModal('App Versions', modalContent);
             feather.replace(); // Re-initialize Feather icons
         } else {
-            alert('App version information not available');
+            Swal.fire({
+                title: 'Information Unavailable',
+                text: 'App version information not available',
+                icon: 'info',
+                confirmButtonColor: '#6b7280'
+            });
         }
     }
 </script>

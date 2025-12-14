@@ -257,12 +257,22 @@ class AutoBackupManager {
 
     async saveBackupSettings() {
         try {
+            if (window.authGuard && !(await window.authGuard.checkAuth())) {
+                throw new Error('Not authenticated as admin');
+            }
             const settingsRef = firebaseServices.db.collection('settings').doc('system');
-            
-            await settingsRef.set({
-                backupSettings: this.backupSettings
-            }, { merge: true });
-
+            try {
+                await settingsRef.set({
+                    backupSettings: this.backupSettings
+                }, { merge: true });
+            } catch (innerErr) {
+                if (innerErr.code === 'permission-denied') {
+                    const nested = this.flattenObject(this.backupSettings, 'backupSettings');
+                    await settingsRef.update(nested);
+                } else {
+                    throw innerErr;
+                }
+            }
             console.log('Backup settings saved:', this.backupSettings);
             return true;
         } catch (error) {
@@ -526,6 +536,19 @@ class AutoBackupManager {
                 statusDiv.classList.add('hidden');
             }, 5000);
         }
+    }
+
+    flattenObject(obj, prefix) {
+        const result = {};
+        for (const [key, value] of Object.entries(obj || {})) {
+            const path = prefix ? `${prefix}.${key}` : key;
+            if (value && typeof value === 'object' && !Array.isArray(value) && !(value.toDate)) {
+                Object.assign(result, this.flattenObject(value, path));
+            } else {
+                result[path] = value;
+            }
+        }
+        return result;
     }
 }
 

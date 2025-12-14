@@ -377,10 +377,20 @@
                     if (typeof adminAndroidSync !== 'undefined') {
                         adminAndroidSync.forceSyncDevice(deviceId)
                             .then(() => {
-                                alert('Sync request sent to device');
+                                Swal.fire({
+                                    title: 'Sync Requested',
+                                    text: 'Sync request sent to device',
+                                    icon: 'success',
+                                    confirmButtonColor: '#10b981'
+                                });
                             })
                             .catch(error => {
-                                alert(`Error: ${error.message}`);
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: `${error.message}`,
+                                    icon: 'error',
+                                    confirmButtonColor: '#ef4444'
+                                });
                             });
                     }
                 });

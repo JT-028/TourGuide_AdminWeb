@@ -407,8 +407,6 @@ function showBulkActionsModal() {
                 bulkDeleteUsers();
             }
         });
-    } else {
-        alert(`Bulk actions for ${selectedUsers} selected users will be implemented`);
     }
 }
 
@@ -471,8 +469,6 @@ function editUser(userId) {
                 updateUserRole(userId, result.value.role);
             }
         });
-    } else {
-        alert(`Edit user: ${user.firstName} ${user.lastName}`);
     }
 }
 
@@ -1015,8 +1011,6 @@ function showBulkImportModal() {
                 processBulkImport(result.value.file);
             }
         });
-    } else {
-        alert('Bulk import functionality will be implemented');
     }
 }
 

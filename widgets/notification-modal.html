@@ -150,7 +150,12 @@
                     });
                     
                     // Show success message
-                    alert('Notification sent successfully');
+                    Swal.fire({
+                        title: 'Notification Sent',
+                        text: 'Notification sent successfully',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981'
+                    });
                     
                     // Close modal
                     notificationModal.classList.add('hidden');
@@ -162,7 +167,12 @@
                 }
             } catch (error) {
                 console.error('Error sending notification:', error);
-                alert(`Failed to send notification: ${error.message}`);
+                Swal.fire({
+                    title: 'Failed to Send',
+                    text: `${error.message}`,
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
             } finally {
                 // Restore button state
                 const submitButton = notificationForm.querySelector('button[type="submit"]');

@@ -53,16 +53,12 @@ class AuthManager {
                     console.log('Is admin:', this.isAdmin);
                     
                     if (!this.isAdmin) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                title: 'Access Denied',
-                                text: `Admin privileges required. Your role: ${userData.role || 'undefined'}`,
-                                icon: 'error',
-                                confirmButtonColor: '#ef4444'
-                            });
-                        } else {
-                            alert(`Access denied. Admin privileges required. Your role: ${userData.role || 'undefined'}`);
-                        }
+                        Swal.fire({
+                            title: 'Access Denied',
+                            text: `Admin privileges required. Your role: ${userData.role || 'undefined'}`,
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
                         this.signOut();
                         return;
                     }
@@ -140,30 +136,22 @@ class AuthManager {
                             profileImageUrl: user.photoURL || '',
                             isEmailVerified: user.emailVerified || false
                         });
-                    } else {
-                        if (typeof Swal !== 'undefined') {
+                        } else {
                             Swal.fire({
                                 title: 'Access Denied',
                                 text: 'Only @cca.edu.ph or @gmail.com email addresses are allowed for admin access.',
                                 icon: 'error',
                                 confirmButtonColor: '#ef4444'
                             });
-                        } else {
-                            alert('Access denied. Only @cca.edu.ph or @gmail.com email addresses are allowed for admin access.');
+                            this.signOut();
                         }
-                        this.signOut();
-                    }
                 } else {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Error',
-                            text: 'Error creating admin user profile. Please contact administrator.',
-                            icon: 'error',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    } else {
-                        alert('Error creating admin user profile. Please contact administrator.');
-                    }
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Error creating admin user profile. Please contact administrator.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
                     this.signOut();
                 }
             }
@@ -187,38 +175,26 @@ class AuthManager {
             } else {
                 // More specific error messages
                 if (error.code === 'permission-denied') {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Permission Denied',
-                            text: 'Please ensure you have admin access to the Firebase project.',
-                            icon: 'error',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    } else {
-                        alert('Permission denied. Please ensure you have admin access to the Firebase project.');
-                    }
+                    Swal.fire({
+                        title: 'Permission Denied',
+                        text: 'Please ensure you have admin access to the Firebase project.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
                 } else if (error.code === 'unavailable') {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Service Unavailable',
-                            text: 'Firebase service is currently unavailable. Please try again later.',
-                            icon: 'error',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    } else {
-                        alert('Firebase service is currently unavailable. Please try again later.');
-                    }
+                    Swal.fire({
+                        title: 'Service Unavailable',
+                        text: 'Firebase service is currently unavailable. Please try again later.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
                 } else {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: 'Error',
-                            text: `Error verifying admin status: ${error.message}. Please try again.`,
-                            icon: 'error',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    } else {
-                        alert(`Error verifying admin status: ${error.message}. Please try again.`);
-                    }
+                    Swal.fire({
+                        title: 'Error',
+                        text: `Error verifying admin status: ${error.message}. Please try again.`,
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
                 }
             }
         }
