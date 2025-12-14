@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Email Configuration Test</title>
+    <link rel="icon" type="image/svg+xml" href="web_icon/web_icon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">Firebase Email Configuration Test</h1>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Current Firebase Configuration</h2>
+            <div id="config-info" class="bg-gray-50 p-4 rounded font-mono text-sm"></div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Email Action URL Settings</h2>
+            <div id="action-url-info" class="bg-gray-50 p-4 rounded">
+                <p>Action URL: <span id="action-url" class="font-mono"></span></p>
+                <p>Current Domain: <span id="current-domain" class="font-mono"></span></p>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Test Email Sending</h2>
+            <div class="flex gap-2 mb-3">
+                <input type="email" id="test-email" placeholder="Enter email address" 
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md">
+                <button onclick="sendTestEmail()" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Send Test Reset Email
+                </button>
+            </div>
+            <div id="test-result" class="p-3 rounded"></div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Common Issues Checklist</h2>
+            <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                    <li>✓ Firebase Authentication is enabled in Firebase Console</li>
+                    <li>✓ Email/Password sign-in method is enabled</li>
+                    <li>✓ Email templates are configured in Firebase Console</li>
+                    <li>✓ Authorized domains include this domain in Firebase Console</li>
+                    <li>✓ Email action URL matches an authorized domain</li>
+                    <li>✓ No ad blockers blocking Firebase requests</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Debug Information</h2>
+            <div id="debug-info" class="bg-gray-50 p-4 rounded font-mono text-xs max-h-64 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        function logDebug(message) {
+            const debugDiv = document.getElementById('debug-info');
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            debugDiv.scrollTop = debugDiv.scrollHeight;
+        }
+
+        window.addEventListener('load', function() {
+            logDebug('Page loaded, starting Firebase diagnostics...');
+            
+            // Display configuration info
+            const configDiv = document.getElementById('config-info');
+            configDiv.innerHTML = `
+                <p>Project ID: ${firebaseConfig.projectId}</p>
+                <p>Auth Domain: ${firebaseConfig.authDomain}</p>
+                <p>API Key: ${firebaseConfig.apiKey.substring(0, 10)}...</p>
+            `;
+            
+            // Display action URL info
+            const currentDomain = window.location.origin;
+            const actionUrl = currentDomain + '/login.html';
+            document.getElementById('action-url').textContent = actionUrl;
+            document.getElementById('current-domain').textContent = currentDomain;
+            
+            logDebug(`Current domain: ${currentDomain}`);
+            logDebug(`Action URL: ${actionUrl}`);
+            
+            // Check Firebase status
+            try {
+                if (typeof firebase === 'undefined') {
+                    logDebug('ERROR: Firebase SDK not loaded');
+                    return;
+                }
+                
+                if (!firebase.app) {
+                    logDebug('ERROR: Firebase app not initialized');
+                    return;
+                }
+                
+                const app = firebase.app();
+                logDebug(`Firebase app initialized: ${app.name}`);
+                
+                if (!firebase.auth) {
+                    logDebug('ERROR: Firebase Auth not available');
+                    return;
+                }
+                
+                const auth = firebase.auth();
+                logDebug('Firebase Auth is available');
+                
+                if (typeof firebaseServices === 'undefined') {
+                    logDebug('ERROR: firebaseServices not defined');
+                    return;
+                }
+                
+                if (!firebaseServices.auth) {
+                    logDebug('ERROR: firebaseServices.auth not available');
+                    return;
+                }
+                
+                logDebug('All Firebase services are properly configured');
+                
+            } catch (error) {
+                logDebug(`Firebase initialization error: ${error.message}`);
+            }
+        });
+
+        async function sendTestEmail() {
+            const email = document.getElementById('test-email').value;
+            const resultDiv = document.getElementById('test-result');
+            
+            if (!email) {
+                resultDiv.innerHTML = '<p class="text-red-600">Please enter an email address</p>';
+                return;
+            }
+            
+            logDebug(`Starting password reset test for: ${email}`);
+            resultDiv.innerHTML = '<p class="text-blue-600">Sending reset email...</p>';
+            
+            try {
+                // Test if the email exists first
+                logDebug('Checking if email exists in Firebase...');
+                
+                // Try to get user by email (this will throw if user doesn't exist)
+                try {
+                    await firebaseServices.auth.getUserByEmail(email);
+                    logDebug('User found in Firebase');
+                } catch (userError) {
+                    logDebug(`User check result: ${userError.code} - ${userError.message}`);
+                    // Continue anyway, as sendPasswordResetEmail should handle this
+                }
+                
+                const actionCodeSettings = {
+                    url: window.location.origin + '/login.html',
+                    handleCodeInApp: false,
+                    // Add iOS and Android settings if needed
+                    iOS: {
+                        bundleId: 'com.example.tourapp'
+                    },
+                    android: {
+                        packageName: 'com.example.tourapp',
+                        installApp: true,
+                        minimumVersion: '12'
+                    }
+                };
+                
+                logDebug('Sending password reset email with settings:', JSON.stringify(actionCodeSettings, null, 2));
+                
+                await firebaseServices.auth.sendPasswordResetEmail(email, actionCodeSettings);
+                
+                logDebug('Password reset email sent successfully');
+                resultDiv.innerHTML = '<p class="text-green-600">Reset email sent successfully! Check your inbox.</p>';
+                
+            } catch (error) {
+                logDebug(`Password reset failed: ${error.code} - ${error.message}`);
+                logDebug(`Full error object: ${JSON.stringify(error, null, 2)}`);
+                
+                let message = error.message || 'Failed to send reset email';
+                if (error.code === 'auth/invalid-email') {
+                    message = 'Invalid email address format';
+                } else if (error.code === 'auth/user-not-found') {
+                    message = 'No user found with this email address';
+                } else if (error.code === 'auth/too-many-requests') {
+                    message = 'Too many attempts. Please try again later.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    message = 'Network error. Check your internet connection.';
+                } else if (error.code === 'auth/internal-error') {
+                    message = 'Internal Firebase error. The email service may not be properly configured.';
+                } else if (error.code === 'auth/configuration-not-found') {
+                    message = 'Email service not configured in Firebase Console.';
+                }
+                
+                resultDiv.innerHTML = `<p class="text-red-600">Error: ${message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
