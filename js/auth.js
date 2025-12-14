@@ -201,15 +201,37 @@ class AuthManager {
     }
 
     updateAdminUI(userData) {
-        // Update sidebar admin info
+        const sidebar = document.querySelector('.sidebar');
+        const cardContainer = sidebar ? sidebar.querySelector('.p-4.border-t') : null;
+        const hasAdminCard = !!document.querySelector('.admin-name') && !!document.querySelector('.admin-email');
+        if (cardContainer && !hasAdminCard) {
+            cardContainer.innerHTML = `
+                <div class="flex items-center">
+                    <img class="w-10 h-10 rounded-full object-cover admin-avatar" src="${userData.profileImageUrl || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICAgIDxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2YzZjRmNiIvPgogICAgPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0iIzljYTNhZiIvPgo8L3N2Zz4K'}" alt="Admin">
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900 admin-name">${userData.firstName || ''} ${userData.lastName || ''}</p>
+                        <p class="text-xs text-gray-500 admin-email">${userData.email || ''}</p>
+                    </div>
+                    <button onclick="window.authGuard && window.authGuard.logout && window.authGuard.logout()" class="text-red-600 hover:text-red-700 transition-colors" title="Logout">
+                        <i data-feather="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `;
+        }
         const adminNameElement = document.querySelector('.admin-name');
         const adminEmailElement = document.querySelector('.admin-email');
-        
+        const adminAvatarElement = document.querySelector('.admin-avatar');
         if (adminNameElement) {
             adminNameElement.textContent = `${userData.firstName} ${userData.lastName}`;
         }
         if (adminEmailElement) {
             adminEmailElement.textContent = userData.email;
+        }
+        if (adminAvatarElement) {
+            adminAvatarElement.src = userData.profileImageUrl || adminAvatarElement.src;
+        }
+        if (typeof feather !== 'undefined') {
+            feather.replace();
         }
     }
 
