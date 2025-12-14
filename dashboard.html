@@ -565,30 +565,29 @@
                         <h2 class="ml-2 text-lg font-medium text-gray-900">Dashboard</h2>
                     </div>
                     <div class="flex items-center space-x-4 header-actions">
-                            <div id="connectionStatus" class="flex items-center text-sm text-green-600 hidden md:flex">
-                                <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
-                                Connected
-                            </div>
-                            <div id="syncIndicator" class="hidden"></div>
-                            
-                            <!-- Search Container -->
-                            <div class="relative search-container">
-                                <input type="text" id="globalSearch" placeholder="Search..." 
-                                       class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 w-full">
-                                <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
-                                <!-- Search Dropdown -->
-                                <div id="searchDropdown" class="search-dropdown"></div>
-                            </div>
-                            
-                            <!-- Notification Bell -->
-                            <div class="relative">
-                                <button id="notificationBell" class="text-gray-500 hover:text-gray-700 notification-btn touch-target relative">
-                                    <i data-feather="bell" class="w-5 h-5"></i>
-                                    <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
-                                </button>
-                                <!-- Notification Dropdown -->
-                                <div id="notificationDropdown" class="notification-dropdown"></div>
-                            </div>
+                        <div id="connectionStatus" class="flex items-center text-sm text-green-600 hidden md:flex">
+                            <i data-feather="wifi" class="w-4 h-4 mr-1"></i>
+                            Connected
+                        </div>
+                        <div id="syncIndicator" class="hidden"></div>
+                        
+                        <!-- Search Container -->
+                        <div class="relative search-container">
+                            <input type="text" id="globalSearch" placeholder="Search..." 
+                                   class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 w-full">
+                            <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                            <!-- Search Dropdown -->
+                            <div id="searchDropdown" class="search-dropdown"></div>
+                        </div>
+                        
+                        <!-- Notification Bell -->
+                        <div class="relative">
+                            <button id="notificationBell" class="text-gray-500 hover:text-gray-700 notification-btn touch-target relative">
+                                <i data-feather="bell" class="w-5 h-5"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
+                            </button>
+                            <!-- Notification Dropdown -->
+                            <div id="notificationDropdown" class="notification-dropdown"></div>
                         </div>
                     </div>
                 </div>
@@ -681,133 +680,6 @@
         <button id="mobileMenuBtn" class="mobile-menu-btn touch-target">
             <i data-feather="menu" class="w-6 h-6"></i>
         </button>
-                </div>
-            </header>
-
-            <main class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-sky-100 text-sky-600">
-                                <i data-feather="users" class="w-6 h-6"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Total Users</p>
-                                <p class="text-2xl font-semibold text-gray-900" id="total-users">
-                                    <span id="total-users-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
-                                    <span id="total-users-value" class="hidden">0</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-100 text-green-600">
-                                <i data-feather="user-plus" class="w-6 h-6"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Teachers</p>
-                                <p class="text-2xl font-semibold text-gray-900" id="teacher-count">
-                                    <span id="teacher-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
-                                    <span id="teacher-count-value" class="hidden">0</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-purple-100 text-purple-600">
-                                <i data-feather="user" class="w-6 h-6"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Students</p>
-                                <p class="text-2xl font-semibold text-gray-900" id="student-count">
-                                    <span id="student-count-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
-                                    <span id="student-count-value" class="hidden">0</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dashboard-card bg-white p-6 rounded-lg shadow transition duration-300">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                                <i data-feather="map" class="w-6 h-6"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Active Trips</p>
-                                <p class="text-2xl font-semibold text-gray-900" id="active-trips">
-                                    <span id="active-trips-loading" class="inline-block w-8 h-6 bg-gray-200 rounded animate-pulse"></span>
-                                    <span id="active-trips-value" class="hidden">0</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-medium text-gray-900">Recent Activity</h3>
-                            <button class="text-sm text-sky-600 hover:text-sky-700">View All</button>
-                        </div>
-                        <div class="space-y-4 recent-activity-container">
-                            <div class="text-center py-8 text-gray-500">
-                                <i data-feather="loader" class="w-8 h-8 mx-auto mb-3 animate-spin text-gray-300"></i>
-                                <p>Loading recent activity...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-                        <div class="space-y-3">
-                            <button class="w-full flex items-center justify-between p-3 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition quick-action-btn" data-action="register-teacher">
-                                <span>Register New Teacher</span>
-                                <i data-feather="user-plus" class="w-5 h-5"></i>
-                            </button>
-                            <button class="w-full flex items-center justify-between p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition quick-action-btn" data-action="create-backup">
-                                <span>Create Backup</span>
-                                <i data-feather="save" class="w-5 h-5"></i>
-                            </button>
-                            <button class="w-full flex items-center justify-between p-3 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition quick-action-btn" data-action="system-settings">
-                                <span>System Settings</span>
-                                <i data-feather="settings" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="android-app-status-container" class="mt-6 dashboard-container"></div>
-
-                <div class="mt-6 bg-white p-6 rounded-lg shadow">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Recently Registered Users</h3>
-                        <button class="text-sm text-sky-600 hover:text-sky-700">View All</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="recent-users-table">
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                        <i data-feather="loader" class="w-6 h-6 mx-auto mb-2 animate-spin text-gray-300"></i>
-                                        <p>Loading recent users...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </main>
-        </div>
     </div>
     <script>
         feather.replace();
