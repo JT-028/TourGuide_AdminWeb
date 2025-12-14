@@ -53,7 +53,16 @@ class AuthManager {
                     console.log('Is admin:', this.isAdmin);
                     
                     if (!this.isAdmin) {
-                        alert(`Access denied. Admin privileges required. Your role: ${userData.role || 'undefined'}`);
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Access Denied',
+                                text: `Admin privileges required. Your role: ${userData.role || 'undefined'}`,
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        } else {
+                            alert(`Access denied. Admin privileges required. Your role: ${userData.role || 'undefined'}`);
+                        }
                         this.signOut();
                         return;
                     }
@@ -118,8 +127,7 @@ class AuthManager {
                     
                     console.log('Document creation failed, checking email domain for admin access...');
                     
-                    // Grant admin access if email is from @cca.edu.ph domain
-                    if (user.email && user.email.endsWith('@cca.edu.ph')) {
+                    if (user.email && (user.email.endsWith('@cca.edu.ph') || user.email.endsWith('@gmail.com'))) {
                         console.log('Granting admin access based on email domain');
                         this.isAdmin = true;
                         this.updateAdminUI({
@@ -133,11 +141,29 @@ class AuthManager {
                             isEmailVerified: user.emailVerified || false
                         });
                     } else {
-                        alert('Access denied. Only @cca.edu.ph email addresses are allowed for admin access.');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Access Denied',
+                                text: 'Only @cca.edu.ph or @gmail.com email addresses are allowed for admin access.',
+                                icon: 'error',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        } else {
+                            alert('Access denied. Only @cca.edu.ph or @gmail.com email addresses are allowed for admin access.');
+                        }
                         this.signOut();
                     }
                 } else {
-                    alert('Error creating admin user profile. Please contact administrator.');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Error creating admin user profile. Please contact administrator.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else {
+                        alert('Error creating admin user profile. Please contact administrator.');
+                    }
                     this.signOut();
                 }
             }
@@ -145,8 +171,7 @@ class AuthManager {
             console.error('Error checking admin status:', error);
             console.error('Error details:', error.message, error.code);
             
-            // Fallback: grant admin access if email is from @cca.edu.ph domain
-            if (user.email && user.email.endsWith('@cca.edu.ph')) {
+            if (user.email && (user.email.endsWith('@cca.edu.ph') || user.email.endsWith('@gmail.com'))) {
                 console.log('Fallback: Granting admin access based on email domain');
                 this.isAdmin = true;
                 this.updateAdminUI({
@@ -162,11 +187,38 @@ class AuthManager {
             } else {
                 // More specific error messages
                 if (error.code === 'permission-denied') {
-                    alert('Permission denied. Please ensure you have admin access to the Firebase project.');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Permission Denied',
+                            text: 'Please ensure you have admin access to the Firebase project.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else {
+                        alert('Permission denied. Please ensure you have admin access to the Firebase project.');
+                    }
                 } else if (error.code === 'unavailable') {
-                    alert('Firebase service is currently unavailable. Please try again later.');
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Service Unavailable',
+                            text: 'Firebase service is currently unavailable. Please try again later.',
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else {
+                        alert('Firebase service is currently unavailable. Please try again later.');
+                    }
                 } else {
-                    alert(`Error verifying admin status: ${error.message}. Please try again.`);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Error',
+                            text: `Error verifying admin status: ${error.message}. Please try again.`,
+                            icon: 'error',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    } else {
+                        alert(`Error verifying admin status: ${error.message}. Please try again.`);
+                    }
                 }
             }
         }
@@ -187,9 +239,9 @@ class AuthManager {
 
     async signIn(email, password) {
         try {
-            // Validate email domain
-            if (!email.endsWith('@cca.edu.ph')) {
-                throw new Error('Only @cca.edu.ph email addresses are allowed.');
+            const allowed = ['@cca.edu.ph', '@gmail.com'];
+            if (!allowed.some(d => email.toLowerCase().endsWith(d))) {
+                throw new Error('Only @cca.edu.ph or @gmail.com email addresses are allowed.');
             }
 
             // Wait for Firebase services if not available

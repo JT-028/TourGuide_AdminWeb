@@ -187,10 +187,10 @@
                         </div>
                         <input type="email" id="email" name="email" required 
                                class="form-input pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" 
-                               placeholder="admin@cca.edu.ph"
+                               placeholder="admin@cca.edu.ph or admin@gmail.com"
                                autocomplete="email">
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Only @cca.edu.ph email addresses are allowed</p>
+                    <p class="text-xs text-gray-500 mt-1">Allowed domains: @cca.edu.ph or @gmail.com</p>
                 </div>
 
                 <div>
@@ -262,16 +262,16 @@
             statusMessage.classList.add('hidden');
             
             // Validate email domain
-            if (!email.endsWith('@cca.edu.ph')) {
+            if (!['@cca.edu.ph', '@gmail.com'].some(d => email.toLowerCase().endsWith(d))) {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Invalid Email Domain',
-                        text: 'Only @cca.edu.ph email addresses are allowed for admin access.',
+                        text: 'Allowed domains: @cca.edu.ph or @gmail.com.',
                         icon: 'error',
                         confirmButtonColor: '#ef4444'
                     });
                 } else {
-                    showStatusMessage('Only @cca.edu.ph email addresses are allowed for admin access.', 'error');
+                    showStatusMessage('Allowed domains: @cca.edu.ph or @gmail.com.', 'error');
                 }
                 return;
             }

@@ -118,13 +118,17 @@ class AuthGuard {
     // Redirect to login page
     redirectToLogin(message) {
         console.log('AuthGuard: Redirecting to login:', message);
-        
-        // Show message to user
-        if (message) {
-            alert(message);
+        if (message && typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Notice',
+                text: message,
+                icon: 'info',
+                confirmButtonColor: '#0ea5e9',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
         }
-        
-        // Redirect to login page
         window.location.href = 'index.html';
     }
 
@@ -187,10 +191,10 @@ class AuthGuard {
                     timerProgressBar: true,
                     showConfirmButton: false
                 }).then(() => {
-                    this.redirectToLogin('You have been logged out.');
+                    this.redirectToLogin();
                 });
             } else {
-                this.redirectToLogin('You have been logged out.');
+                this.redirectToLogin();
             }
         } catch (error) {
             console.error('AuthGuard: Logout error:', error);
@@ -203,10 +207,10 @@ class AuthGuard {
                     icon: 'error',
                     confirmButtonColor: '#ef4444'
                 }).then(() => {
-                    this.redirectToLogin('Logout failed. Please refresh the page.');
+                    this.redirectToLogin();
                 });
             } else {
-                this.redirectToLogin('Logout failed. Please refresh the page.');
+                this.redirectToLogin();
             }
         }
     }
@@ -220,7 +224,18 @@ class AuthGuard {
                     // Only redirect if we were previously authenticated
                     if (this.currentUser) {
                         console.log('AuthGuard: User logged out, redirecting to login');
-                        this.redirectToLogin('You have been logged out.');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Logged Out',
+                                text: 'You have been logged out.',
+                                icon: 'info',
+                                confirmButtonColor: '#10b981',
+                                timer: 2000,
+                                timerProgressBar: true,
+                                showConfirmButton: false
+                            });
+                        }
+                        this.redirectToLogin();
                     }
                 } else {
                     console.log('AuthGuard: Auth state changed - user:', user.email);
