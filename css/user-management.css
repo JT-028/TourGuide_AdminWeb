@@ -118,29 +118,6 @@
     }
 }
 
-/* Mobile menu button */
-.mobile-menu-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 30;
-    background: #0ea5e9;
-    color: white;
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    display: none;
-}
-
-@media (max-width: 1023px) {
-    .mobile-menu-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
 /* Touch-friendly buttons */
 .touch-target {
     min-height: 44px;
