@@ -212,6 +212,39 @@ class DashboardManager {
         this.updateStatCard('upcoming-trips', tripsData.planned);
         this.updateStatCard('ongoing-trips', tripsData.ongoing);
         this.updateStatCard('completed-trips', tripsData.completed);
+        
+        // Update role distribution bars
+        this.updateRoleDistribution(usersData);
+    }
+    
+    updateRoleDistribution(usersData) {
+        const total = usersData.total || 1; // Avoid division by zero
+        
+        // Admin count and bar
+        const adminCountEl = document.getElementById('admin-role-count');
+        const adminBarEl = document.getElementById('admin-role-bar');
+        if (adminCountEl) adminCountEl.textContent = usersData.admins || 0;
+        if (adminBarEl) adminBarEl.style.width = `${((usersData.admins || 0) / total) * 100}%`;
+        
+        // Teacher count and bar
+        const teacherCountEl = document.getElementById('teacher-role-count');
+        const teacherBarEl = document.getElementById('teacher-role-bar');
+        if (teacherCountEl) teacherCountEl.textContent = usersData.teachers || 0;
+        if (teacherBarEl) teacherBarEl.style.width = `${((usersData.teachers || 0) / total) * 100}%`;
+        
+        // Student count and bar
+        const studentCountEl = document.getElementById('student-role-count');
+        const studentBarEl = document.getElementById('student-role-bar');
+        if (studentCountEl) studentCountEl.textContent = usersData.students || 0;
+        if (studentBarEl) studentBarEl.style.width = `${((usersData.students || 0) / total) * 100}%`;
+        
+        // Update last sync time
+        const lastSyncEl = document.getElementById('last-sync-time');
+        if (lastSyncEl) {
+            lastSyncEl.textContent = new Date().toLocaleTimeString('en-US', { 
+                hour: '2-digit', minute: '2-digit' 
+            });
+        }
     }
 
     updateTripStats(tripsData) {

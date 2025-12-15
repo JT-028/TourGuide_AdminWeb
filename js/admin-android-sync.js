@@ -357,35 +357,7 @@ class AdminAndroidSync {
      * Add required components to DOM if not already present
      */
     addRequiredComponentsToDom() {
-        // Check for Android App Status widget
-        if (!document.querySelector('[id^="android-app-status"]')) {
-            fetch('widgets/android-app-status.html')
-                .then(response => response.text())
-                .then(html => {
-                    // Find a suitable container for the widget
-                    const dashboardContainer = document.querySelector('.dashboard-container') || 
-                                              document.querySelector('main') ||
-                                              document.body;
-                    
-                    if (dashboardContainer) {
-                        // Create widget container
-                        const widgetContainer = document.createElement('div');
-                        widgetContainer.className = 'mt-8';
-                        widgetContainer.innerHTML = html;
-                        dashboardContainer.appendChild(widgetContainer);
-                        
-                        console.log('Android App Status widget added to DOM');
-                        
-                        // Initialize Feather icons if available
-                        if (typeof feather !== 'undefined') {
-                            feather.replace();
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading Android App Status widget:', error);
-                });
-        }
+        // Android App Status widget removed - replaced with System Overview in dashboard.html
         
         // Check if notification modal exists, if not, load it
         if (!document.getElementById('notification-modal')) {
