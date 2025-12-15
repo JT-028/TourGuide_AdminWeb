@@ -28,13 +28,19 @@
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
+        <!-- Mobile Overlay -->
+        <div id="mobileOverlay" class="mobile-overlay"></div>
+        
         <!-- Sidebar -->
-        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0 -translate-x-full">
-            <div class="p-4 border-b">
+        <div class="sidebar bg-white w-64 border-r flex flex-col fixed h-full z-50 lg:relative lg:translate-x-0">
+            <div class="p-4 border-b flex justify-between items-center">
                 <h1 class="text-xl font-bold text-sky-600 flex items-center">
                     <i data-feather="compass" class="mr-2"></i>
                     TourApp Admin
                 </h1>
+                <button id="closeSidebar" class="lg:hidden text-gray-500 hover:text-gray-700">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
             </div>
             <nav class="flex-1 overflow-y-auto">
                 <div class="p-4">
@@ -90,12 +96,24 @@
                         <h2 class="ml-2 text-lg font-medium text-gray-900">Settings</h2>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <button class="text-gray-500 hover:text-gray-700">
-                            <i data-feather="bell" class="w-5 h-5"></i>
-                        </button>
+                        <!-- Notification Bell -->
                         <div class="relative">
-                            <input type="text" placeholder="Search..." class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500">
+                            <button id="notificationBell" class="text-gray-500 hover:text-gray-700 relative">
+                                <i data-feather="bell" class="w-5 h-5"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+                            </button>
+                            <div id="notificationDropdown" class="notification-dropdown absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                                <div class="p-4 text-center text-gray-500">
+                                    <i data-feather="loader" class="w-6 h-6 mx-auto animate-spin"></i>
+                                    <p class="mt-2">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Search Bar -->
+                        <div class="relative">
+                            <input type="text" id="globalSearch" placeholder="Search users..." class="pl-8 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 w-48">
                             <i data-feather="search" class="absolute left-2 top-2.5 text-gray-400 w-4 h-4"></i>
+                            <div id="searchDropdown" class="search-dropdown absolute right-0 mt-1 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto"></div>
                         </div>
                     </div>
                 </div>
@@ -333,10 +351,241 @@
             }
         });
 
-        // Prevent sidebar toggle from closing when clicking inside sidebar
-        document.querySelector('.sidebar').addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
+        // Mobile Navigation
+        (function() {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const closeSidebar = document.getElementById('closeSidebar');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            
+            function openSidebar() {
+                sidebar?.classList.add('open');
+                mobileOverlay?.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeSidebarMenu() {
+                sidebar?.classList.remove('open');
+                mobileOverlay?.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            sidebarToggle?.addEventListener('click', openSidebar);
+            closeSidebar?.addEventListener('click', closeSidebarMenu);
+            mobileOverlay?.addEventListener('click', closeSidebarMenu);
+            
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 1024) {
+                        closeSidebarMenu();
+                    }
+                });
+            });
+            
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1024) {
+                    closeSidebarMenu();
+                }
+            });
+            
+            // Initialize Search and Notification systems
+            initSearchSystem();
+            initNotificationSystem();
+        })();
+        
+        // Global Search System
+        function initSearchSystem() {
+            const searchInput = document.getElementById('globalSearch');
+            const searchDropdown = document.getElementById('searchDropdown');
+            let searchResults = [];
+            let searchTimeout = null;
+            
+            async function loadSearchData() {
+                try {
+                    const usersSnapshot = await firebaseServices.usersCollection.limit(100).get();
+                    searchResults = usersSnapshot.docs.map(doc => ({
+                        type: 'user',
+                        id: doc.id,
+                        title: `${doc.data().firstName || ''} ${doc.data().lastName || ''}`,
+                        subtitle: doc.data().email || '',
+                        icon: 'user',
+                        url: 'user-management.html',
+                        data: doc.data()
+                    }));
+                } catch (error) {
+                    console.error('Error loading search data:', error);
+                }
+            }
+            
+            function handleSearch(query) {
+                clearTimeout(searchTimeout);
+                if (!query.trim()) { hideDropdown(); return; }
+                searchTimeout = setTimeout(() => performSearch(query.trim().toLowerCase()), 300);
+            }
+            
+            function performSearch(query) {
+                const results = searchResults.filter(item => 
+                    item.title.toLowerCase().includes(query) ||
+                    item.subtitle.toLowerCase().includes(query)
+                ).slice(0, 8);
+                renderResults(results, query);
+                showDropdown();
+            }
+            
+            function renderResults(results, query) {
+                if (results.length === 0) {
+                    searchDropdown.innerHTML = `<div class="p-4 text-center text-gray-500"><p>No results found</p></div>`;
+                    return;
+                }
+                searchDropdown.innerHTML = results.map(item => `
+                    <div class="search-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100" 
+                         onclick="window.location.href='${item.url}?id=${item.id}'">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <i data-feather="${item.icon}" class="w-4 h-4 text-gray-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${item.title}</p>
+                                <p class="text-xs text-gray-500 truncate">${item.subtitle}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                feather.replace();
+            }
+            
+            function showDropdown() { searchDropdown?.classList.add('show'); }
+            function hideDropdown() { searchDropdown?.classList.remove('show'); }
+            
+            searchInput?.addEventListener('input', (e) => handleSearch(e.target.value));
+            searchInput?.addEventListener('focus', () => { if (searchInput.value) showDropdown(); });
+            document.addEventListener('click', (e) => {
+                if (!searchInput?.contains(e.target) && !searchDropdown?.contains(e.target)) hideDropdown();
+            });
+            
+            loadSearchData();
+        }
+        
+        // Notification System
+        function initNotificationSystem() {
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationBadge = document.getElementById('notificationBadge');
+            let notifications = [];
+            
+            async function loadNotifications() {
+                try {
+                    notifications = [];
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    
+                    const recentUsersSnapshot = await firebaseServices.usersCollection
+                        .orderBy('createdAt', 'desc').limit(10).get();
+                    
+                    recentUsersSnapshot.forEach(doc => {
+                        const user = doc.data();
+                        const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                        if (createdAt >= sevenDaysAgo) {
+                            notifications.push({
+                                id: 'user_' + doc.id,
+                                title: 'New User Registered',
+                                message: `${user.firstName || 'Unknown'} ${user.lastName || ''} joined as ${user.role || 'user'}`,
+                                timestamp: user.createdAt,
+                                type: 'success',
+                                read: false
+                            });
+                        }
+                    });
+                    
+                    checkReadStatus();
+                    updateUnreadCount();
+                    renderNotifications();
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+            
+            function checkReadStatus() {
+                const readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                notifications.forEach(n => { if (readNotifications.includes(n.id)) n.read = true; });
+            }
+            
+            function updateUnreadCount() {
+                const unreadCount = notifications.filter(n => !n.read).length;
+                if (unreadCount > 0) {
+                    notificationBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    notificationBadge.classList.remove('hidden');
+                } else {
+                    notificationBadge.classList.add('hidden');
+                }
+            }
+            
+            function formatTimestamp(timestamp) {
+                if (!timestamp) return 'Just now';
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                const diff = Date.now() - date;
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+                return date.toLocaleDateString();
+            }
+            
+            function renderNotifications() {
+                if (notifications.length === 0) {
+                    notificationDropdown.innerHTML = `<div class="p-4 text-center text-gray-500"><i data-feather="bell-off" class="w-8 h-8 mx-auto mb-2"></i><p>No notifications</p></div>`;
+                    feather.replace();
+                    return;
+                }
+                notificationDropdown.innerHTML = notifications.map(n => `
+                    <div class="notification-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${!n.read ? 'bg-blue-50' : ''}" 
+                         onclick="markNotificationRead('${n.id}')">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <i data-feather="check-circle" class="w-4 h-4 text-green-600"></i>
+                            </div>
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">${n.title}</p>
+                                <p class="text-xs text-gray-600">${n.message}</p>
+                                <p class="text-xs text-gray-400">${formatTimestamp(n.timestamp)}</p>
+                            </div>
+                            ${!n.read ? '<div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full"></div>' : ''}
+                        </div>
+                    </div>
+                `).join('') + `<div class="p-2 border-t"><button onclick="markAllNotificationsRead()" class="w-full text-center text-xs text-gray-500 hover:text-gray-700 py-1">Mark all as read</button></div>`;
+                feather.replace();
+            }
+            
+            window.markNotificationRead = function(id) {
+                const n = notifications.find(x => x.id === id);
+                if (n) {
+                    n.read = true;
+                    const readList = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                    if (!readList.includes(id)) { readList.push(id); localStorage.setItem('readNotifications', JSON.stringify(readList)); }
+                    updateUnreadCount();
+                    renderNotifications();
+                }
+            };
+            
+            window.markAllNotificationsRead = function() {
+                const readList = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                notifications.forEach(n => { n.read = true; if (!readList.includes(n.id)) readList.push(n.id); });
+                localStorage.setItem('readNotifications', JSON.stringify(readList));
+                updateUnreadCount();
+                renderNotifications();
+            };
+            
+            notificationBell?.addEventListener('click', () => {
+                notificationDropdown?.classList.toggle('show');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!notificationBell?.contains(e.target) && !notificationDropdown?.contains(e.target)) {
+                    notificationDropdown?.classList.remove('show');
+                }
+            });
+            
+            loadNotifications();
+        }
 
         // Settings functionality is handled by settings.js
         // The save button event listener is attached in SettingsManager class

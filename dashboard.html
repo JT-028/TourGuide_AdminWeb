@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/form-fixes.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     
@@ -281,38 +280,116 @@
             
             async loadNotifications() {
                 try {
-                    const snapshot = await firebaseServices.db.collection('admin_notifications')
-                        .orderBy('timestamp', 'desc')
-                        .limit(20)
-                        .get();
+                    // Generate notifications from actual user and trip activities
+                    this.notifications = [];
                     
-                    this.notifications = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
+                    // Get recent user registrations (last 7 days)
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    
+                    try {
+                        const recentUsersSnapshot = await firebaseServices.usersCollection
+                            .orderBy('createdAt', 'desc')
+                            .limit(10)
+                            .get();
+                        
+                        recentUsersSnapshot.forEach(doc => {
+                            const user = doc.data();
+                            const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                            if (createdAt >= sevenDaysAgo) {
+                                this.notifications.push({
+                                    id: 'user_' + doc.id,
+                                    title: 'New User Registered',
+                                    message: `${user.firstName || 'Unknown'} ${user.lastName || ''} joined as ${user.role || 'user'}`,
+                                    timestamp: user.createdAt,
+                                    type: 'success',
+                                    read: false
+                                });
+                            }
+                        });
+                    } catch (err) {
+                        console.log('Could not load user notifications:', err);
+                    }
+                    
+                    // Get recent trips
+                    try {
+                        const recentTripsSnapshot = await firebaseServices.tripsCollection
+                            .orderBy('createdAt', 'desc')
+                            .limit(10)
+                            .get();
+                        
+                        recentTripsSnapshot.forEach(doc => {
+                            const trip = doc.data();
+                            const createdAt = trip.createdAt?.toDate ? trip.createdAt.toDate() : new Date(trip.createdAt);
+                            if (createdAt >= sevenDaysAgo) {
+                                this.notifications.push({
+                                    id: 'trip_' + doc.id,
+                                    title: trip.status === 'ONGOING' ? 'Trip In Progress' : 'New Trip Created',
+                                    message: `${trip.tripName || trip.title || 'Trip'} - ${trip.destination || 'Unknown destination'}`,
+                                    timestamp: trip.createdAt,
+                                    type: trip.status === 'ONGOING' ? 'warning' : 'info',
+                                    read: false
+                                });
+                            }
+                        });
+                    } catch (err) {
+                        console.log('Could not load trip notifications:', err);
+                    }
+                    
+                    // Sort by timestamp
+                    this.notifications.sort((a, b) => {
+                        const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
+                        const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp || 0);
+                        return dateB - dateA;
+                    });
+                    
+                    // Limit to 20
+                    this.notifications = this.notifications.slice(0, 20);
+                    
+                    // Check read status from localStorage
+                    this.checkReadStatus();
                     
                     this.updateUnreadCount();
                     this.renderNotifications();
                 } catch (error) {
                     console.error('Error loading notifications:', error);
+                    this.notifications = [];
+                    this.renderNotifications();
                 }
             }
             
             setupRealtimeListener() {
-                // Listen for new notifications
-                firebaseServices.db.collection('admin_notifications')
-                    .where('timestamp', '>', new Date())
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type === 'added') {
-                                const notification = {
-                                    id: change.doc.id,
-                                    ...change.doc.data()
-                                };
-                                this.addNotification(notification);
-                            }
+                // Listen for new users being added in real-time
+                try {
+                    firebaseServices.usersCollection
+                        .orderBy('createdAt', 'desc')
+                        .limit(1)
+                        .onSnapshot((snapshot) => {
+                            snapshot.docChanges().forEach((change) => {
+                                if (change.type === 'added') {
+                                    const user = change.doc.data();
+                                    const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+                                    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                                    
+                                    // Only show notification for very recent users
+                                    if (createdAt > fiveMinutesAgo) {
+                                        this.addNotification({
+                                            id: 'user_' + change.doc.id,
+                                            title: 'New User Registered',
+                                            message: `${user.firstName || 'Unknown'} ${user.lastName || ''} joined as ${user.role || 'user'}`,
+                                            timestamp: user.createdAt,
+                                            type: 'success',
+                                            read: false
+                                        });
+                                    }
+                                }
+                            });
+                        }, (error) => {
+                            console.log('Realtime listener error:', error);
                         });
-                    });
+                } catch (err) {
+                    console.log('Could not setup realtime listener:', err);
+                }
             }
             
             addNotification(notification) {
@@ -421,44 +498,46 @@
             }
             
             async markAsRead(notificationId) {
-                try {
-                    await firebaseServices.db.collection('admin_notifications').doc(notificationId).update({
-                        read: true,
-                        readAt: new Date()
-                    });
+                // Mark as read locally (no database update needed for generated notifications)
+                const notification = this.notifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.read = true;
+                    this.updateUnreadCount();
+                    this.renderNotifications();
                     
-                    const notification = this.notifications.find(n => n.id === notificationId);
-                    if (notification) {
-                        notification.read = true;
-                        this.updateUnreadCount();
-                        this.renderNotifications();
+                    // Store read status in localStorage
+                    const readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                    if (!readNotifications.includes(notificationId)) {
+                        readNotifications.push(notificationId);
+                        localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
                     }
-                } catch (error) {
-                    console.error('Error marking notification as read:', error);
                 }
             }
             
             async markAllAsRead() {
-                try {
-                    const unreadNotifications = this.notifications.filter(n => !n.read);
-                    const batch = firebaseServices.db.batch();
-                    
-                    unreadNotifications.forEach(notification => {
-                        const ref = firebaseServices.db.collection('admin_notifications').doc(notification.id);
-                        batch.update(ref, {
-                            read: true,
-                            readAt: new Date()
-                        });
-                    });
-                    
-                    await batch.commit();
-                    
-                    this.notifications.forEach(n => n.read = true);
-                    this.updateUnreadCount();
-                    this.renderNotifications();
-                } catch (error) {
-                    console.error('Error marking all notifications as read:', error);
-                }
+                // Mark all as read locally
+                const readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                
+                this.notifications.forEach(n => {
+                    n.read = true;
+                    if (!readNotifications.includes(n.id)) {
+                        readNotifications.push(n.id);
+                    }
+                });
+                
+                localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
+                this.updateUnreadCount();
+                this.renderNotifications();
+            }
+            
+            // Check if notification was previously read
+            checkReadStatus() {
+                const readNotifications = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+                this.notifications.forEach(n => {
+                    if (readNotifications.includes(n.id)) {
+                        n.read = true;
+                    }
+                });
             }
             
             toggleDropdown() {
@@ -656,12 +735,49 @@
                     </div>
                 </div>
 
-                <!-- Charts and Tables -->
+                <!-- Quick Stats and Recent Data -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Trip Statistics -->
                     <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">User Registration Trends</h3>
-                        <div class="responsive-table">
-                            <canvas id="registrationChart" width="400" height="200"></canvas>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Trip Overview</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                                <p class="text-2xl font-bold text-blue-600" id="total-trips">0</p>
+                                <p class="text-sm text-gray-600">Total Trips</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <p class="text-2xl font-bold text-green-600" id="planned-trips">0</p>
+                                <p class="text-sm text-gray-600">Planned</p>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                                <p class="text-2xl font-bold text-yellow-600" id="ongoing-trips">0</p>
+                                <p class="text-sm text-gray-600">Ongoing</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <p class="text-2xl font-bold text-purple-600" id="completed-trips">0</p>
+                                <p class="text-sm text-gray-600">Completed</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Users Table -->
+                        <h4 class="text-md font-semibold text-gray-800 mb-3">Recent Users</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-users-table" class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-8 text-center text-gray-500">
+                                            <div class="animate-pulse">Loading users...</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow">

@@ -75,7 +75,7 @@ class DashboardManager {
             ]);
 
             this.updateDashboardStats(usersData, tripsData);
-            this.updateRegistrationChart(usersData);
+            this.updateTripStats(tripsData);
             this.updateRecentActivity(recentActivity);
             this.updateRecentUsersTable(usersData);
             this.updateQuickActions();
@@ -214,61 +214,17 @@ class DashboardManager {
         this.updateStatCard('completed-trips', tripsData.completed);
     }
 
-    updateRegistrationChart(usersData) {
-        const canvas = document.getElementById('registrationChart');
-        if (!canvas || !window.Chart) return;
-
-        const countsByMonth = {};
-        usersData.allUsers.forEach(user => {
-            const createdAt = user.createdAt?.toDate ? user.createdAt.toDate() : (user.createdAt ? new Date(user.createdAt) : null);
-            if (!createdAt || isNaN(createdAt)) return;
-            const key = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
-            countsByMonth[key] = (countsByMonth[key] || 0) + 1;
-        });
-
-        const sortedKeys = Object.keys(countsByMonth).sort();
-        const labels = sortedKeys.length ? sortedKeys : ['No data'];
-        const data = sortedKeys.length ? sortedKeys.map(k => countsByMonth[k]) : [0];
-
-        if (this.registrationChart) {
-            this.registrationChart.data.labels = labels;
-            this.registrationChart.data.datasets[0].data = data;
-            this.registrationChart.update();
-            return;
-        }
-
-        this.registrationChart = new Chart(canvas.getContext('2d'), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'User registrations',
-                    data,
-                    borderColor: 'rgb(56, 189, 248)',
-                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                    tension: 0.3,
-                    fill: true,
-                    pointRadius: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+    updateTripStats(tripsData) {
+        // Update trip statistics in the new dashboard layout
+        const totalTripsEl = document.getElementById('total-trips');
+        const plannedTripsEl = document.getElementById('planned-trips');
+        const ongoingTripsEl = document.getElementById('ongoing-trips');
+        const completedTripsEl = document.getElementById('completed-trips');
+        
+        if (totalTripsEl) totalTripsEl.textContent = tripsData.total || 0;
+        if (plannedTripsEl) plannedTripsEl.textContent = tripsData.planned || 0;
+        if (ongoingTripsEl) ongoingTripsEl.textContent = tripsData.ongoing || 0;
+        if (completedTripsEl) completedTripsEl.textContent = tripsData.completed || 0;
     }
 
     updateStatCard(elementId, value) {
@@ -446,7 +402,7 @@ class DashboardManager {
         if (recentUsers.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    <td colspan="3" class="px-4 py-8 text-center text-gray-500">
                         <i data-feather="users" class="w-8 h-8 mx-auto mb-2 text-gray-300"></i>
                         <p>No users found</p>
                     </td>
@@ -466,9 +422,8 @@ class DashboardManager {
 
     createUserTableRow(user) {
         const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
         
-        const statusClass = this.getUserStatusClass(user.role);
-        const statusText = this.getUserStatusText(user.role);
         const roleClass = this.getUserRoleClass(user.role);
         const roleText = this.getUserRoleText(user.role);
 
@@ -481,28 +436,26 @@ class DashboardManager {
             </svg>
         `);
 
+        // Format the join date
+        const joinDate = this.formatTimeAgo(user.createdAt);
+
         row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                        <img class="h-10 w-10 rounded-full object-cover" src="${user.profileImageUrl || defaultProfilePicture}" alt="${user.firstName || 'User'}" onerror="this.src='${defaultProfilePicture}'">
+                    <div class="flex-shrink-0 h-8 w-8">
+                        <img class="h-8 w-8 rounded-full object-cover" src="${user.profileImageUrl || defaultProfilePicture}" alt="${user.firstName || 'User'}" onerror="this.src='${defaultProfilePicture}'">
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-3">
                         <div class="text-sm font-medium text-gray-900">${user.firstName || 'Unknown'} ${user.lastName || ''}</div>
+                        <div class="text-xs text-gray-500">${user.email || ''}</div>
                     </div>
                 </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${user.email}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">${roleText}</span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${statusText}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <button class="text-sky-600 hover:text-sky-900" onclick="window.location.href='user-management.html'">Edit</button>
+            <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                ${joinDate}
             </td>
         `;
 
