@@ -1016,35 +1016,85 @@
             });
         }
 
-        // Process teacher approval (via Cloud Function)
-        function processTeacherApproval(docId) {
+        // Process teacher approval (direct Firestore update - no cloud function needed)
+        async function processTeacherApproval(docId) {
             console.log('Processing teacher approval for:', docId);
 
-            const approveFn = firebaseServices.functions.httpsCallable('approveTeacher');
-            approveFn({ email: docId })
-                .then((res) => {
-                    console.log('approveTeacher result:', res?.data || res);
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Teacher approved and migrated to users.',
-                        icon: 'success',
-                        confirmButtonColor: '#10b981'
-                    });
-                    loadTeacherRequests();
-                })
-                .catch((error) => {
-                    console.error('Error approving teacher request:', error);
-                    let errorMessage = 'Failed to approve teacher request.';
-                    if (error && error.message) {
-                        errorMessage = error.message;
-                    }
-                    Swal.fire({
-                        title: 'Error',
-                        text: errorMessage,
-                        icon: 'error',
-                        confirmButtonColor: '#ef4444'
-                    });
+            try {
+                // Get the pending teacher data
+                const pendingDoc = await firebaseServices.db.collection('pending_teachers').doc(docId).get();
+                
+                if (!pendingDoc.exists) {
+                    throw new Error('Teacher request not found');
+                }
+                
+                const teacherData = pendingDoc.data();
+                console.log('Teacher data for approval:', teacherData);
+                
+                // Create user document in 'users' collection
+                const userData = {
+                    email: teacherData.email,
+                    firstName: teacherData.firstName || '',
+                    lastName: teacherData.lastName || '',
+                    role: 'teacher',
+                    status: 'active',
+                    uid: teacherData.uid || '',
+                    createdAt: firebase.firestore.Timestamp.now(),
+                    approvedAt: firebase.firestore.Timestamp.now(),
+                    approvedBy: firebaseServices.auth.currentUser.uid,
+                    migratedFromPending: true
+                };
+                
+                // Use email as document ID for consistency
+                await firebaseServices.db.collection('users').doc(teacherData.email).set(userData);
+                console.log('Created user document for:', teacherData.email);
+                
+                // Update pending_teachers status to approved
+                await firebaseServices.db.collection('pending_teachers').doc(docId).update({
+                    status: 'approved',
+                    approvedAt: firebase.firestore.Timestamp.now(),
+                    approvedBy: firebaseServices.auth.currentUser.uid
                 });
+                console.log('Updated pending_teachers status to approved');
+                
+                // Create system event for auditing
+                await firebaseServices.db.collection('system_events').add({
+                    eventType: 'TEACHER_REQUEST_APPROVED',
+                    initiatedBy: firebaseServices.auth.currentUser.uid,
+                    targetUserId: teacherData.uid || '',
+                    targetEmail: teacherData.email,
+                    timestamp: firebase.firestore.Timestamp.now(),
+                    description: `Admin approved teacher registration for ${teacherData.email}`,
+                    details: {
+                        docId: docId,
+                        teacherData: {
+                            firstName: teacherData.firstName,
+                            lastName: teacherData.lastName
+                        }
+                    }
+                });
+                
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Teacher approved and added to users.',
+                    icon: 'success',
+                    confirmButtonColor: '#10b981'
+                });
+                loadTeacherRequests();
+                
+            } catch (error) {
+                console.error('Error approving teacher request:', error);
+                let errorMessage = 'Failed to approve teacher request.';
+                if (error && error.message) {
+                    errorMessage = error.message;
+                }
+                Swal.fire({
+                    title: 'Error',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
         }
 
         // Reject teacher request (PRESERVED FROM WORKING VERSION)
