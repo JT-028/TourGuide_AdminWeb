@@ -291,7 +291,7 @@
                     </div>
 
                     <!-- Teacher Registration Requests -->
-                    <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-medium text-gray-900">Teacher Registration Requests</h3>
                             <button onclick="loadTeacherRequests()" class="text-sky-600 hover:text-sky-700 text-sm">
@@ -300,21 +300,10 @@
                             </button>
                         </div>
                         
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="teacherRequestsTable" class="bg-white divide-y divide-gray-200">
-                                    <!-- Teacher requests will be populated here -->
-                            </table>
-                            </div>
+                        <!-- Request Cards Container - Responsive layout without horizontal scroll -->
+                        <div id="teacherRequestsContainer" class="space-y-3">
+                            <!-- Teacher requests will be populated here as cards -->
+                        </div>
                             
                         <div id="noTeacherRequests" class="text-center py-8 text-gray-500 hidden">
                             <i data-feather="users" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i>
@@ -803,37 +792,46 @@
         // Toggle password visibility
         function togglePasswordVisibility(fieldId, button) {
             const field = document.getElementById(fieldId);
-            const icon = button.querySelector('i');
             
-            if (!field || !icon) {
-                console.error('Password toggle elements not found:', { fieldId, button });
+            if (!field) {
+                console.error('Password field not found:', fieldId);
                 return;
             }
             
+            // Toggle password visibility
             if (field.type === 'password') {
                 field.type = 'text';
-                icon.setAttribute('data-feather', 'eye-off');
+                // Update icon to eye-off (showing password)
+                button.innerHTML = '<i data-feather="eye-off" class="w-4 h-4"></i>';
             } else {
                 field.type = 'password';
-                icon.setAttribute('data-feather', 'eye');
+                // Update icon to eye (hiding password)
+                button.innerHTML = '<i data-feather="eye" class="w-4 h-4"></i>';
             }
-            feather.replace();
+            
+            // Reinitialize feather icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+            
+            // Keep focus on password field for better UX
+            field.focus();
         }
 
         // Load teacher requests (PRESERVED FROM WORKING VERSION)
         function loadTeacherRequests() {
             console.log('Loading teacher requests...');
             
-            const tableBody = document.getElementById('teacherRequestsTable');
+            const container = document.getElementById('teacherRequestsContainer');
             const noRequestsDiv = document.getElementById('noTeacherRequests');
             
-            if (!tableBody) {
-                console.error('Table body not found');
+            if (!container) {
+                console.error('Container not found');
                 return;
             }
             
-            // Clear existing rows
-            tableBody.innerHTML = '';
+            // Clear existing content
+            container.innerHTML = '';
             
             // Check if Firebase is available
             if (typeof firebaseServices === 'undefined' || !firebaseServices.db) {
@@ -950,37 +948,34 @@
                         return dateB - dateA; // Newest first
                     });
                     
-                    // Display the sorted requests (limit to 10)
+                    // Display the sorted requests (limit to 10) as cards
                     requests.slice(0, 10).forEach((request) => {
                         const data = request.data;
-            const row = document.createElement('tr');
-            
-           row.innerHTML = `
-               <td class="px-6 py-4 whitespace-nowrap">
-                           <div class="text-sm font-medium text-gray-900">${data.firstName} ${data.lastName}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                           <div class="text-sm text-gray-500">${data.email}</div>
-               </td>
-               <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">${data.department || 'N/A'}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">${data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'N/A'}</div>
-               </td>
-               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex space-x-2">
-                                    <button onclick="approveTeacherRequest('${request.id}')" class="text-green-600 hover:text-green-900">
-                                        <i data-feather="check" class="w-4 h-4"></i>
-                   </button>
-                                    <button onclick="rejectTeacherRequest('${request.id}')" class="text-red-600 hover:text-red-900">
-                                        <i data-feather="x" class="w-4 h-4"></i>
-                   </button>
+                        const card = document.createElement('div');
+                        card.className = 'teacher-request-card';
+                        
+                        card.innerHTML = `
+                            <div class="teacher-request-info">
+                                <div class="teacher-request-name">${data.firstName} ${data.lastName}</div>
+                                <div class="teacher-request-email">${data.email}</div>
+                                <div class="teacher-request-details">
+                                    <span class="teacher-request-dept">${data.department || 'N/A'}</span>
+                                    <span class="teacher-request-date">${data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'N/A'}</span>
                                 </div>
-               </td>
-           `;
+                            </div>
+                            <div class="teacher-request-actions">
+                                <button onclick="approveTeacherRequest('${request.id}')" class="teacher-request-action-btn approve-btn" title="Accept">
+                                    <i data-feather="check-circle" class="w-4 h-4"></i>
+                                    <span>ACCEPT</span>
+                                </button>
+                                <button onclick="rejectTeacherRequest('${request.id}')" class="teacher-request-action-btn reject-btn" title="Decline">
+                                    <i data-feather="x-circle" class="w-4 h-4"></i>
+                                    <span>DECLINE</span>
+                                </button>
+                            </div>
+                        `;
             
-                        tableBody.appendChild(row);
+                        container.appendChild(card);
                     });
                     
                     feather.replace();
@@ -1016,78 +1011,86 @@
             });
         }
 
-        // Process teacher approval (direct Firestore update - no cloud function needed)
+        // Process teacher approval (uses Cloud Function HTTP endpoint for proper permissions)
         async function processTeacherApproval(docId) {
             console.log('Processing teacher approval for:', docId);
 
             try {
-                // Get the pending teacher data
-                const pendingDoc = await firebaseServices.db.collection('pending_teachers').doc(docId).get();
-                
-                if (!pendingDoc.exists) {
-                    throw new Error('Teacher request not found');
-                }
-                
-                const teacherData = pendingDoc.data();
-                console.log('Teacher data for approval:', teacherData);
-                
-                // Create user document in 'users' collection
-                const userData = {
-                    email: teacherData.email,
-                    firstName: teacherData.firstName || '',
-                    lastName: teacherData.lastName || '',
-                    role: 'teacher',
-                    status: 'active',
-                    uid: teacherData.uid || '',
-                    createdAt: firebase.firestore.Timestamp.now(),
-                    approvedAt: firebase.firestore.Timestamp.now(),
-                    approvedBy: firebaseServices.auth.currentUser.uid,
-                    migratedFromPending: true
-                };
-                
-                // Use email as document ID for consistency
-                await firebaseServices.db.collection('users').doc(teacherData.email).set(userData);
-                console.log('Created user document for:', teacherData.email);
-                
-                // Update pending_teachers status to approved
-                await firebaseServices.db.collection('pending_teachers').doc(docId).update({
-                    status: 'approved',
-                    approvedAt: firebase.firestore.Timestamp.now(),
-                    approvedBy: firebaseServices.auth.currentUser.uid
-                });
-                console.log('Updated pending_teachers status to approved');
-                
-                // Create system event for auditing
-                await firebaseServices.db.collection('system_events').add({
-                    eventType: 'TEACHER_REQUEST_APPROVED',
-                    initiatedBy: firebaseServices.auth.currentUser.uid,
-                    targetUserId: teacherData.uid || '',
-                    targetEmail: teacherData.email,
-                    timestamp: firebase.firestore.Timestamp.now(),
-                    description: `Admin approved teacher registration for ${teacherData.email}`,
-                    details: {
-                        docId: docId,
-                        teacherData: {
-                            firstName: teacherData.firstName,
-                            lastName: teacherData.lastName
-                        }
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Approving teacher registration request',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
                 });
+
+                // Get the current user's ID token for authentication
+                const idToken = await firebaseServices.auth.currentUser.getIdToken();
                 
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Teacher approved and added to users.',
-                    icon: 'success',
-                    confirmButtonColor: '#10b981'
-                });
-                loadTeacherRequests();
+                // Try Cloud Function first
+                try {
+                    const response = await fetch('https://us-central1-tourapp-69eaf.cloudfunctions.net/approveTeacherRequestHttp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
+                        body: JSON.stringify({
+                            docId: docId
+                        })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        Swal.fire({
+                            title: 'Success!',
+                            text: result.message || 'Teacher approved and added to users.',
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        });
+                        loadTeacherRequests();
+                        return;
+                    }
+                    
+                    // If Cloud Function returns error, try fallback
+                    console.log('Cloud Function returned error, trying direct write...');
+                } catch (cfError) {
+                    console.log('Cloud Function not available, trying direct write...', cfError);
+                }
+                
+                // Fallback: Try direct Firestore write
+                await processTeacherApprovalDirect(docId);
                 
             } catch (error) {
                 console.error('Error approving teacher request:', error);
                 let errorMessage = 'Failed to approve teacher request.';
+                
                 if (error && error.message) {
-                    errorMessage = error.message;
+                    if (error.message.includes('permission') || error.message.includes('Permission')) {
+                        errorMessage = 'Permission denied. Please ensure your Firestore security rules allow admins to write to the users collection. See console for details.';
+                        console.error('FIRESTORE PERMISSION ERROR: You need to update your Firestore security rules to allow authenticated admins to write to the "users" and "pending_teachers" collections.');
+                        console.error('Suggested rule for users collection:');
+                        console.error(`
+match /users/{userId} {
+    allow read: if request.auth != null;
+    allow write: if request.auth != null && 
+        (request.auth.uid == userId || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+}
+
+match /pending_teachers/{docId} {
+    allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+                        `);
+                    } else {
+                        errorMessage = error.message;
+                    }
                 }
+                
                 Swal.fire({
                     title: 'Error',
                     text: errorMessage,
@@ -1095,6 +1098,61 @@
                     confirmButtonColor: '#ef4444'
                 });
             }
+        }
+
+        // Direct Firestore approval (fallback method)
+        async function processTeacherApprovalDirect(docId) {
+            console.log('Processing teacher approval directly for:', docId);
+
+            // Get the pending teacher data
+            const pendingDoc = await firebaseServices.db.collection('pending_teachers').doc(docId).get();
+            
+            if (!pendingDoc.exists) {
+                throw new Error('Teacher request not found');
+            }
+            
+            const teacherData = pendingDoc.data();
+            console.log('Teacher data for approval:', teacherData);
+            
+            // Use batch write for atomicity
+            const batch = firebaseServices.db.batch();
+            
+            // Create user document in 'users' collection using the UID as document ID
+            const userDocRef = firebaseServices.db.collection('users').doc(teacherData.uid || docId);
+            const userData = {
+                email: teacherData.email,
+                firstName: teacherData.firstName || '',
+                lastName: teacherData.lastName || '',
+                role: 'teacher',
+                status: 'active',
+                uid: teacherData.uid || '',
+                department: teacherData.department || '',
+                createdAt: firebase.firestore.Timestamp.now(),
+                approvedAt: firebase.firestore.Timestamp.now(),
+                approvedBy: firebaseServices.auth.currentUser.uid,
+                migratedFromPending: true
+            };
+            batch.set(userDocRef, userData);
+            
+            // Update pending_teachers status to approved
+            const pendingDocRef = firebaseServices.db.collection('pending_teachers').doc(docId);
+            batch.update(pendingDocRef, {
+                status: 'approved',
+                approvedAt: firebase.firestore.Timestamp.now(),
+                approvedBy: firebaseServices.auth.currentUser.uid
+            });
+            
+            // Commit the batch
+            await batch.commit();
+            console.log('Teacher approved successfully via direct Firestore write');
+            
+            Swal.fire({
+                title: 'Success!',
+                text: 'Teacher approved and added to users.',
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            });
+            loadTeacherRequests();
         }
 
         // Reject teacher request (PRESERVED FROM WORKING VERSION)

@@ -90,3 +90,167 @@
 .search-dropdown.show {
     display: block;
 }
+
+/* Teacher Registration Request Action Buttons - Oval Style */
+.teacher-request-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    border: 2px solid;
+    cursor: pointer;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.teacher-request-action-btn.approve-btn {
+    background-color: transparent;
+    color: #16a34a;
+    border-color: #16a34a;
+}
+
+.teacher-request-action-btn.approve-btn:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.teacher-request-action-btn.reject-btn {
+    background-color: transparent;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.teacher-request-action-btn.reject-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.teacher-request-action-btn i,
+.teacher-request-action-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.teacher-request-action-btn span {
+    line-height: 1;
+}
+
+/* Teacher Request Card Layout - No horizontal scroll */
+.teacher-request-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.teacher-request-card:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.teacher-request-info {
+    flex: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+.teacher-request-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.teacher-request-email {
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.teacher-request-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.teacher-request-dept {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.teacher-request-date {
+    color: #9ca3af;
+}
+
+.teacher-request-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 640px) {
+    .teacher-request-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+    }
+    
+    .teacher-request-info {
+        margin-bottom: 8px;
+    }
+    
+    .teacher-request-actions {
+        justify-content: flex-start;
+    }
+    
+    .teacher-request-action-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 12px;
+    }
+}
+
+/* Compact buttons for smaller action area */
+@media (max-width: 480px) {
+    .teacher-request-action-btn {
+        padding: 8px 10px;
+        font-size: 10px;
+        gap: 4px;
+    }
+    
+    .teacher-request-action-btn i,
+    .teacher-request-action-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+}

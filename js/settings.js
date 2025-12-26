@@ -83,9 +83,18 @@ class SettingsManager {
         const schoolCode = document.getElementById('schoolCode');
         const schoolAddress = document.getElementById('schoolAddress');
 
-        if (schoolName) schoolName.value = this.settings.schoolName || 'Colegio de San Agustin';
-        if (schoolCode) schoolCode.value = this.settings.schoolCode || 'CCA';
-        if (schoolAddress) schoolAddress.value = this.settings.schoolAddress || 'Makati City, Metro Manila';
+        if (schoolName) {
+            schoolName.value = this.settings.schoolName || '';
+            schoolName.placeholder = 'Enter school name';
+        }
+        if (schoolCode) {
+            schoolCode.value = this.settings.schoolCode || '';
+            schoolCode.placeholder = 'Enter school code';
+        }
+        if (schoolAddress) {
+            schoolAddress.value = this.settings.schoolAddress || '';
+            schoolAddress.placeholder = 'Enter school address';
+        }
 
         // Application Preferences
         const emailNotificationsToggle = document.querySelector('input[type="checkbox"]:checked');
@@ -414,9 +423,9 @@ class SettingsManager {
 
     getDefaultSettings() {
         return {
-            schoolName: 'Colegio de San Agustin',
-            schoolCode: 'CCA',
-            schoolAddress: 'Makati City, Metro Manila',
+            schoolName: '',
+            schoolCode: '',
+            schoolAddress: '',
             emailNotifications: true,
             smsAlerts: true,
             autoLogoutTimer: 30,
